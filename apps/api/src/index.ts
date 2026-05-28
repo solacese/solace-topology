@@ -7,7 +7,7 @@ const config = loadRuntimeConfig();
 const topologyService = new TopologyService(config);
 await topologyService.start();
 
-const app = createApp(config, topologyService);
+const app = createApp(topologyService);
 const server = createServer(app);
 
 server.listen(config.port, () => {

@@ -1,10 +1,8 @@
 import cors from "cors";
 import express from "express";
-import { createSessionToken, requireSession, validateSessionToken } from "../auth/session.js";
-import type { RuntimeConfig } from "../config/env.js";
 import type { TopologyService } from "../collector/topologyService.js";
 
-export function createApp(config: RuntimeConfig, topologyService: TopologyService) {
+export function createApp(topologyService: TopologyService) {
   const app = express();
   app.use(cors());
   app.use(express.json());
@@ -13,22 +11,7 @@ export function createApp(config: RuntimeConfig, topologyService: TopologyServic
     res.json({ ok: true, service: "solace-topology-api" });
   });
 
-  app.post("/api/login", (req, res) => {
-    const password = typeof req.body?.password === "string" ? req.body.password : "";
-    if (password !== config.adminPassword) {
-      res.status(401).json({ error: "Invalid password" });
-      return;
-    }
-    res.json(createSessionToken(config.sessionSecret));
-  });
-
   app.get("/api/live", (req, res) => {
-    const token = typeof req.query.token === "string" ? req.query.token : undefined;
-    if (!validateSessionToken(config.sessionSecret, token)) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
-
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",
@@ -52,8 +35,6 @@ export function createApp(config: RuntimeConfig, topologyService: TopologyServic
       res.end();
     });
   });
-
-  app.use("/api", requireSession(config));
 
   app.get("/api/topology", (_req, res) => {
     res.json(topologyService.getSnapshot());

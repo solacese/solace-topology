@@ -1,8 +1,7 @@
 import { useState } from "react";
 import type { TopologyNode, TopologyScenario } from "@solace-topology/shared";
-import { FileCode2, Network, Power, Save, Settings, X } from "lucide-react";
+import { FileCode2, Network, Save, Settings, X } from "lucide-react";
 import { BrokerSettingsPanel } from "./components/BrokerSettingsPanel.js";
-import { LoginPanel } from "./components/LoginPanel.js";
 import { RightPanel } from "./components/RightPanel.js";
 import { Toolbar } from "./components/Toolbar.js";
 import { TopologyGraph } from "./components/TopologyGraph.js";
@@ -77,10 +76,6 @@ export function App() {
     await topology.updateScenarioConfig(nextScenario);
   }
 
-  if (!topology.isAuthenticated) {
-    return <LoginPanel onLogin={topology.signIn} />;
-  }
-
   if (!topology.snapshot) {
     return (
       <main className="loading-screen">
@@ -119,9 +114,6 @@ export function App() {
           <button className={yamlOpen ? "top-action active" : "top-action"} onClick={() => void toggleYamlEditor()}>
             <FileCode2 size={16} />
             YAML Config
-          </button>
-          <button className="icon-button" onClick={topology.signOut} aria-label="Sign out">
-            <Power size={18} />
           </button>
         </div>
       </header>

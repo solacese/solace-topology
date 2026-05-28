@@ -8,8 +8,6 @@ export interface RuntimeConfig {
   pollIntervalMs: number;
   topologyConfigPath: string;
   defaultScenarioId?: string;
-  adminPassword: string;
-  sessionSecret: string;
   sampleFallbackEnabled: boolean;
   neo4j: {
     uri: string;
@@ -46,8 +44,6 @@ export function loadRuntimeConfig(): RuntimeConfig {
     pollIntervalMs: intFromEnv("POLL_INTERVAL_MS", 5000),
     topologyConfigPath: process.env.TOPOLOGY_CONFIG_PATH ?? defaultRepoFile("config/topology.yaml"),
     defaultScenarioId: process.env.DEFAULT_SCENARIO_ID,
-    adminPassword: process.env.APP_ADMIN_PASSWORD ?? "admin",
-    sessionSecret: process.env.SESSION_SECRET ?? "dev-session-secret",
     sampleFallbackEnabled: boolFromEnv("SAMPLE_FALLBACK_ENABLED", true),
     neo4j: {
       uri: process.env.NEO4J_URI ?? "bolt://localhost:7687",

@@ -160,10 +160,15 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
         }
         const sourceRect = source.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
-        const x1 = sourceRect.left + sourceRect.width / 2 - containerRect.left;
-        const y1 = sourceRect.top + sourceRect.height / 2 - containerRect.top + container.scrollTop;
-        const x2 = targetRect.left + targetRect.width / 2 - containerRect.left;
-        const y2 = targetRect.top + targetRect.height / 2 - containerRect.top + container.scrollTop;
+        const sourceCenterX = sourceRect.left + sourceRect.width / 2;
+        const sourceCenterY = sourceRect.top + sourceRect.height / 2;
+        const targetCenterX = targetRect.left + targetRect.width / 2;
+        const targetCenterY = targetRect.top + targetRect.height / 2;
+        const horizontalRoute = Math.abs(targetCenterX - sourceCenterX) >= Math.abs(targetCenterY - sourceCenterY);
+        const x1 = (horizontalRoute ? (targetCenterX >= sourceCenterX ? sourceRect.right : sourceRect.left) : sourceCenterX) - containerRect.left;
+        const y1 = (horizontalRoute ? sourceCenterY : targetCenterY >= sourceCenterY ? sourceRect.bottom : sourceRect.top) - containerRect.top + container.scrollTop;
+        const x2 = (horizontalRoute ? (targetCenterX >= sourceCenterX ? targetRect.left : targetRect.right) : targetCenterX) - containerRect.left;
+        const y2 = (horizontalRoute ? targetCenterY : targetCenterY >= sourceCenterY ? targetRect.top : targetRect.bottom) - containerRect.top + container.scrollTop;
         const mid = x1 + (x2 - x1) * 0.5;
         const activeLink = Boolean(
           selectedId &&

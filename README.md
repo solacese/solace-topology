@@ -19,10 +19,6 @@ npm run dev
 Open the web app at <http://localhost:5173>. The API runs on
 <http://localhost:8080>.
 
-Default demo login:
-
-- password: `admin`
-
 ## Docker Compose
 
 ```bash

@@ -8,18 +8,15 @@ import {
   fetchScenarios,
   fetchScenarioYaml,
   fetchTopology,
-  login,
   saveScenarioConfig,
   saveScenarioYaml,
   selectScenario
 } from "../lib/api.js";
 import { buildStaticSnapshot, scenarioSummaries } from "../lib/staticDemo.js";
 
-const tokenKey = "solace-topology-token";
 const staticMode = import.meta.env.VITE_STATIC_DEMO === "true";
 
 export function useTopology() {
-  const [token, setToken] = useState(() => localStorage.getItem(tokenKey) ?? "");
   const [staticConfig, setStaticConfig] = useState<TopologyConfigFile>();
   const [snapshot, setSnapshot] = useState<TopologySnapshot>();
   const [catalog, setCatalog] = useState<CatalogFile>();
@@ -31,43 +28,15 @@ export function useTopology() {
   const [isConnecting, setIsConnecting] = useState(false);
   const eventSourceRef = useRef<EventSource | undefined>(undefined);
 
-  const isAuthenticated = staticMode || Boolean(token);
-
-  const refreshScenarioConfig = useCallback(
-    async (nextToken = token) => {
-      if (staticMode) {
-        return;
-      }
-      const [scenarioList, nextCatalog, nextConfig] = await Promise.all([fetchScenarios(nextToken), fetchCatalog(nextToken), fetchScenarioConfig(nextToken)]);
-      setScenarios(scenarioList.scenarios);
-      setActiveScenarioId(scenarioList.activeScenarioId);
-      setCatalog(nextCatalog);
-      setScenarioConfig(nextConfig);
-    },
-    [token]
-  );
-
-  const signIn = useCallback(async (password: string) => {
+  const refreshScenarioConfig = useCallback(async () => {
     if (staticMode) {
       return;
     }
-    setError(undefined);
-    const session = await login(password);
-    localStorage.setItem(tokenKey, session.token);
-    setToken(session.token);
-  }, []);
-
-  const signOut = useCallback(() => {
-    if (staticMode) {
-      return;
-    }
-    localStorage.removeItem(tokenKey);
-    setToken("");
-    setSnapshot(undefined);
-    setCatalog(undefined);
-    setScenarioConfig(undefined);
-    setScenarios([]);
-    setActiveScenarioId("");
+    const [scenarioList, nextCatalog, nextConfig] = await Promise.all([fetchScenarios(), fetchCatalog(), fetchScenarioConfig()]);
+    setScenarios(scenarioList.scenarios);
+    setActiveScenarioId(scenarioList.activeScenarioId);
+    setCatalog(nextCatalog);
+    setScenarioConfig(nextConfig);
   }, []);
 
   const changeScenario = useCallback(
@@ -84,14 +53,14 @@ export function useTopology() {
         setError(undefined);
         return;
       }
-      if (!token || scenarioId === activeScenarioId) {
+      if (scenarioId === activeScenarioId) {
         return;
       }
       setIsConnecting(true);
       try {
-        const nextSnapshot = await selectScenario(token, scenarioId);
+        const nextSnapshot = await selectScenario(scenarioId);
         setSnapshot(nextSnapshot);
-        await refreshScenarioConfig(token);
+        await refreshScenarioConfig();
         setError(undefined);
       } catch (reason) {
         setError((reason as Error).message);
@@ -99,7 +68,7 @@ export function useTopology() {
         setIsConnecting(false);
       }
     },
-    [activeScenarioId, refreshScenarioConfig, staticConfig, token]
+    [activeScenarioId, refreshScenarioConfig, staticConfig]
   );
 
   const updateScenarioConfig = useCallback(
@@ -117,14 +86,11 @@ export function useTopology() {
         setSnapshot(buildStaticSnapshot(scenario));
         return;
       }
-      if (!token) {
-        return;
-      }
       setIsConnecting(true);
       try {
-        const nextSnapshot = await saveScenarioConfig(token, scenario);
+        const nextSnapshot = await saveScenarioConfig(scenario);
         setSnapshot(nextSnapshot);
-        await refreshScenarioConfig(token);
+        await refreshScenarioConfig();
         setError(undefined);
       } catch (reason) {
         setError((reason as Error).message);
@@ -132,18 +98,15 @@ export function useTopology() {
         setIsConnecting(false);
       }
     },
-    [refreshScenarioConfig, token]
+    [refreshScenarioConfig]
   );
 
   const loadScenarioYaml = useCallback(async () => {
     if (staticMode) {
       return scenarioConfig ? YAML.stringify(scenarioConfig, { lineWidth: 140 }) : "";
     }
-    if (!token) {
-      return "";
-    }
-    return (await fetchScenarioYaml(token)).yaml;
-  }, [scenarioConfig, token]);
+    return (await fetchScenarioYaml()).yaml;
+  }, [scenarioConfig]);
 
   const updateScenarioYaml = useCallback(
     async (yaml: string) => {
@@ -152,14 +115,11 @@ export function useTopology() {
         await updateScenarioConfig(parsed);
         return;
       }
-      if (!token) {
-        return;
-      }
       setIsConnecting(true);
       try {
-        const nextSnapshot = await saveScenarioYaml(token, yaml);
+        const nextSnapshot = await saveScenarioYaml(yaml);
         setSnapshot(nextSnapshot);
-        await refreshScenarioConfig(token);
+        await refreshScenarioConfig();
         setError(undefined);
       } catch (reason) {
         setError((reason as Error).message);
@@ -168,7 +128,7 @@ export function useTopology() {
         setIsConnecting(false);
       }
     },
-    [refreshScenarioConfig, token, updateScenarioConfig]
+    [refreshScenarioConfig, updateScenarioConfig]
   );
 
   useEffect(() => {
@@ -201,12 +161,12 @@ export function useTopology() {
   }, []);
 
   useEffect(() => {
-    if (staticMode || !token) {
+    if (staticMode) {
       return;
     }
     let cancelled = false;
     setIsConnecting(true);
-    Promise.all([fetchTopology(token), refreshScenarioConfig(token)])
+    Promise.all([fetchTopology(), refreshScenarioConfig()])
       .then(([topology]) => {
         if (cancelled) {
           return;
@@ -219,9 +179,6 @@ export function useTopology() {
           return;
         }
         setError(reason.message);
-        if (reason.message.startsWith("401")) {
-          signOut();
-        }
       })
       .finally(() => {
         if (!cancelled) {
@@ -231,16 +188,16 @@ export function useTopology() {
     return () => {
       cancelled = true;
     };
-  }, [refreshScenarioConfig, signOut, token]);
+  }, [refreshScenarioConfig]);
 
   useEffect(() => {
     eventSourceRef.current?.close();
     eventSourceRef.current = undefined;
-    if (staticMode || !token || paused) {
+    if (staticMode || paused) {
       return;
     }
 
-    const events = new EventSource(`${apiBaseUrl}/api/live?token=${encodeURIComponent(token)}`);
+    const events = new EventSource(`${apiBaseUrl}/api/live`);
     eventSourceRef.current = events;
     events.addEventListener("snapshot", (event) => {
       const parsed = JSON.parse((event as MessageEvent).data) as { snapshot: TopologySnapshot };
@@ -254,12 +211,10 @@ export function useTopology() {
     return () => {
       events.close();
     };
-  }, [paused, token]);
+  }, [paused]);
 
   return useMemo(
     () => ({
-      token,
-      isAuthenticated,
       snapshot,
       catalog,
       scenarioConfig,
@@ -268,8 +223,6 @@ export function useTopology() {
       error,
       paused,
       isConnecting,
-      signIn,
-      signOut,
       setPaused,
       changeScenario,
       updateScenarioConfig,
@@ -281,16 +234,12 @@ export function useTopology() {
       catalog,
       changeScenario,
       error,
-      isAuthenticated,
       isConnecting,
       loadScenarioYaml,
       paused,
       scenarioConfig,
       scenarios,
-      signIn,
-      signOut,
       snapshot,
-      token,
       updateScenarioConfig,
       updateScenarioYaml
     ]
