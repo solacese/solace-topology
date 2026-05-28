@@ -1,16 +1,14 @@
 import type { TopologySnapshot } from "@solace-topology/shared";
-import { Pause, Play, Search, ShieldCheck } from "lucide-react";
+import { Search, ShieldCheck } from "lucide-react";
 import { availableProvenances, type GraphFilters } from "../lib/graph.js";
 
 interface ToolbarProps {
   snapshot: TopologySnapshot;
   filters: GraphFilters;
-  paused: boolean;
   onFiltersChange: (filters: GraphFilters) => void;
-  onPausedChange: (paused: boolean) => void;
 }
 
-export function Toolbar({ snapshot, filters, paused, onFiltersChange, onPausedChange }: ToolbarProps) {
+export function Toolbar({ snapshot, filters, onFiltersChange }: ToolbarProps) {
   const provenances = availableProvenances(snapshot);
 
   function toggleProvenance(provenance: string) {
@@ -47,11 +45,6 @@ export function Toolbar({ snapshot, filters, paused, onFiltersChange, onPausedCh
           </button>
         ))}
       </div>
-
-      <button className="live-toggle" onClick={() => onPausedChange(!paused)}>
-        {paused ? <Play size={18} /> : <Pause size={18} />}
-        {paused ? "Resume" : "Live"}
-      </button>
     </section>
   );
 }

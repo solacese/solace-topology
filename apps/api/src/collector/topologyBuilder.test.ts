@@ -13,7 +13,7 @@ describe("topology builder", () => {
 
     expect(snapshot.mode).toBe("sample");
     expect(snapshot.scenarioId).toBe("automotive");
-    expect(snapshot.nodes.filter((node) => node.type === "Broker")).toHaveLength(4);
+    expect(snapshot.nodes.filter((node) => node.type === "Broker")).toHaveLength(10);
     expect(snapshot.nodes.filter((node) => node.type === "Application")).toHaveLength(20);
     expect(snapshot.summary.emittingApplicationCount).toBe(15);
     expect(snapshot.summary.listeningApplicationCount).toBe(5);

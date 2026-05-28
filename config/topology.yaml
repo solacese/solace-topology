@@ -34,6 +34,45 @@ scenarios:
         tlsRejectUnauthorized: false
         tags: [manufacturing, edge]
 
+      - id: plant-c-edge
+        displayName: Plant C Edge Broker
+        managementUrl: ${BROKER_PLANT_C_URL:-http://localhost:29180}
+        messageVpns: [automotive-prod]
+        region: Europe
+        site: Vehicle Plant C
+        physicalLocation: Bursa, Turkey
+        environment: production
+        usernameEnv: SEMP_USER_PLANT_C
+        passwordEnv: SEMP_PASSWORD_PLANT_C
+        tlsRejectUnauthorized: false
+        tags: [manufacturing, edge]
+
+      - id: battery-plant-edge
+        displayName: Battery Plant Edge Broker
+        managementUrl: ${BROKER_BATTERY_PLANT_URL:-http://localhost:29280}
+        messageVpns: [automotive-prod]
+        region: Europe
+        site: Battery Gigafactory
+        physicalLocation: Douai battery campus, France
+        environment: production
+        usernameEnv: SEMP_USER_BATTERY_PLANT
+        passwordEnv: SEMP_PASSWORD_BATTERY_PLANT
+        tlsRejectUnauthorized: false
+        tags: [manufacturing, edge]
+
+      - id: vehicle-iot-edge
+        displayName: Vehicle IoT Edge Broker
+        managementUrl: ${BROKER_VEHICLE_IOT_URL:-http://localhost:29380}
+        messageVpns: [automotive-prod]
+        region: Europe
+        site: Connected Vehicle Ingestion
+        physicalLocation: Paris connected services, France
+        environment: production
+        usernameEnv: SEMP_USER_VEHICLE_IOT
+        passwordEnv: SEMP_PASSWORD_VEHICLE_IOT
+        tlsRejectUnauthorized: true
+        tags: [iot, edge]
+
       - id: cloud-core
         displayName: Cloud Core Broker
         managementUrl: ${BROKER_CLOUD_URL:-http://localhost:39080}
@@ -46,6 +85,32 @@ scenarios:
         sempApiKeyEnv: SEMP_API_KEY_CLOUD
         tlsRejectUnauthorized: true
         tags: [cloud, analytics]
+
+      - id: analytics-cloud
+        displayName: Analytics Cloud Broker
+        managementUrl: ${BROKER_ANALYTICS_CLOUD_URL:-http://localhost:39180}
+        messageVpns: [automotive-prod]
+        region: Europe
+        site: Analytics Cloud
+        physicalLocation: Frankfurt cloud region
+        environment: production
+        authMode: bearer
+        sempApiKeyEnv: SEMP_API_KEY_ANALYTICS_CLOUD
+        tlsRejectUnauthorized: true
+        tags: [cloud, analytics]
+
+      - id: data-products-cloud
+        displayName: Data Products Broker
+        managementUrl: ${BROKER_DATA_PRODUCTS_URL:-http://localhost:39280}
+        messageVpns: [automotive-prod]
+        region: Europe
+        site: Data Products Cloud
+        physicalLocation: Amsterdam cloud region
+        environment: production
+        authMode: bearer
+        sempApiKeyEnv: SEMP_API_KEY_DATA_PRODUCTS
+        tlsRejectUnauthorized: true
+        tags: [cloud, data]
 
       - id: enterprise-hub
         displayName: Enterprise Hub Broker
@@ -60,6 +125,19 @@ scenarios:
         tlsRejectUnauthorized: true
         tags: [enterprise, integration]
 
+      - id: supplier-gateway
+        displayName: Supplier Gateway Broker
+        managementUrl: ${BROKER_SUPPLIER_GATEWAY_URL:-http://localhost:49180}
+        messageVpns: [automotive-prod]
+        region: Europe
+        site: Supplier Integration Hub
+        physicalLocation: Le Mans, France
+        environment: production
+        usernameEnv: SEMP_USER_SUPPLIER_GATEWAY
+        passwordEnv: SEMP_PASSWORD_SUPPLIER_GATEWAY
+        tlsRejectUnauthorized: true
+        tags: [enterprise, integration, edge]
+
     links:
       - from: plant-a-edge
         to: cloud-core
@@ -67,11 +145,32 @@ scenarios:
       - from: plant-b-edge
         to: cloud-core
         kind: event-mesh
+      - from: plant-c-edge
+        to: cloud-core
+        kind: event-mesh
+      - from: battery-plant-edge
+        to: cloud-core
+        kind: event-mesh
+      - from: vehicle-iot-edge
+        to: cloud-core
+        kind: event-mesh
       - from: cloud-core
+        to: analytics-cloud
+        kind: event-mesh
+      - from: analytics-cloud
+        to: data-products-cloud
+        kind: event-mesh
+      - from: data-products-cloud
         to: enterprise-hub
+        kind: event-mesh
+      - from: enterprise-hub
+        to: supplier-gateway
         kind: event-mesh
       - from: plant-a-edge
         to: plant-b-edge
+        kind: regional-backup
+      - from: plant-b-edge
+        to: plant-c-edge
         kind: regional-backup
 
     owners:
@@ -101,7 +200,7 @@ scenarios:
         provenance: IoT
         owner: connected-vehicle
         costCenter: cv-100
-        brokerIds: [cloud-core]
+        brokerIds: [vehicle-iot-edge]
         clientMatchers: ["veh-telemetry-*", "mqtt-vehicle-*"]
         usernameMatchers: ["vehicle-iot-*"]
         publishTopicPrefixes: ["vehicle/+/telemetry", "vehicle/+/diagnostics"]
@@ -112,7 +211,7 @@ scenarios:
         provenance: IoT
         owner: connected-vehicle
         costCenter: cv-100
-        brokerIds: [cloud-core]
+        brokerIds: [battery-plant-edge]
         clientMatchers: ["battery-health-*"]
         usernameMatchers: ["battery-iot-*"]
         publishTopicPrefixes: ["vehicle/+/battery/health", "vehicle/+/battery/charge"]
@@ -123,7 +222,7 @@ scenarios:
         provenance: IoT
         owner: connected-vehicle
         costCenter: cv-100
-        brokerIds: [cloud-core]
+        brokerIds: [vehicle-iot-edge]
         clientMatchers: ["connected-api-*"]
         usernameMatchers: ["cv-api"]
         publishTopicPrefixes: ["vehicle/+/command/result", "vehicle/+/status"]
@@ -134,7 +233,7 @@ scenarios:
         provenance: IoT
         owner: connected-vehicle
         costCenter: cv-100
-        brokerIds: [cloud-core]
+        brokerIds: [vehicle-iot-edge]
         clientMatchers: ["charge-station-*"]
         usernameMatchers: ["charging-*"]
         publishTopicPrefixes: ["charging/+/session", "charging/+/availability"]
@@ -145,7 +244,7 @@ scenarios:
         provenance: Manufacturing
         owner: manufacturing-it
         costCenter: mf-200
-        brokerIds: [plant-a-edge, plant-b-edge]
+        brokerIds: [plant-a-edge]
         clientMatchers: ["paint-shop-*"]
         usernameMatchers: ["plant-paint-*"]
         publishTopicPrefixes: ["plant/+/paint/temperature", "plant/+/paint/humidity"]
@@ -156,7 +255,7 @@ scenarios:
         provenance: Manufacturing
         owner: manufacturing-it
         costCenter: mf-200
-        brokerIds: [plant-a-edge, plant-b-edge]
+        brokerIds: [plant-b-edge]
         clientMatchers: ["body-robot-*"]
         usernameMatchers: ["robot-*"]
         publishTopicPrefixes: ["plant/+/body/robot/state", "plant/+/body/robot/cycle"]
@@ -167,7 +266,7 @@ scenarios:
         provenance: Manufacturing
         owner: manufacturing-it
         costCenter: mf-200
-        brokerIds: [plant-a-edge, plant-b-edge]
+        brokerIds: [plant-c-edge]
         clientMatchers: ["assembly-plc-*"]
         usernameMatchers: ["plc-*"]
         publishTopicPrefixes: ["plant/+/assembly/line/+/state", "plant/+/assembly/line/+/throughput"]
@@ -178,7 +277,7 @@ scenarios:
         provenance: Manufacturing
         owner: manufacturing-it
         costCenter: mf-200
-        brokerIds: [plant-a-edge, plant-b-edge]
+        brokerIds: [plant-c-edge]
         clientMatchers: ["quality-vision-*"]
         usernameMatchers: ["quality-*"]
         publishTopicPrefixes: ["plant/+/quality/inspection", "plant/+/quality/defect"]
@@ -189,7 +288,7 @@ scenarios:
         provenance: Manufacturing
         owner: manufacturing-it
         costCenter: mf-200
-        brokerIds: [plant-a-edge, plant-b-edge]
+        brokerIds: [plant-b-edge]
         clientMatchers: ["yard-scanner-*"]
         usernameMatchers: ["yard-*"]
         publishTopicPrefixes: ["plant/+/logistics/yard/scan", "plant/+/logistics/vehicle/location"]
@@ -222,7 +321,7 @@ scenarios:
         provenance: Enterprise
         owner: enterprise-apps
         costCenter: ep-300
-        brokerIds: [enterprise-hub]
+        brokerIds: [supplier-gateway]
         clientMatchers: ["supplier-edi-*"]
         usernameMatchers: ["supplier-*"]
         publishTopicPrefixes: ["supplier/+/asn", "supplier/+/shipment"]
@@ -255,7 +354,7 @@ scenarios:
         provenance: Data
         owner: data-platform
         costCenter: dp-400
-        brokerIds: [cloud-core]
+        brokerIds: [data-products-cloud]
         clientMatchers: ["data-product-*"]
         usernameMatchers: ["data-product-*"]
         publishTopicPrefixes: ["data/finance/invoice", "data/customer/profile", "data/vehicle/aggregate"]
@@ -266,7 +365,7 @@ scenarios:
         provenance: Data
         owner: data-platform
         costCenter: dp-400
-        brokerIds: [cloud-core]
+        brokerIds: [analytics-cloud]
         clientMatchers: ["mfg-analytics-*"]
         queueMatchers: ["Q.MFG.ANALYTICS"]
         listen:
@@ -279,7 +378,7 @@ scenarios:
         provenance: Data
         owner: data-platform
         costCenter: dp-400
-        brokerIds: [cloud-core]
+        brokerIds: [analytics-cloud]
         clientMatchers: ["digital-twin-*"]
         queueMatchers: ["Q.DIGITAL.TWIN"]
         listen:
@@ -305,7 +404,7 @@ scenarios:
         provenance: Manufacturing
         owner: manufacturing-it
         costCenter: mf-200
-        brokerIds: [plant-a-edge, plant-b-edge]
+        brokerIds: [plant-a-edge, plant-b-edge, plant-c-edge]
         clientMatchers: ["plant-ops-control-*"]
         queueMatchers: ["Q.PLANT.OPERATIONS"]
         listen:

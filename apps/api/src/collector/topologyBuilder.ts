@@ -198,8 +198,10 @@ export function buildTopologySnapshot(brokersFile: BrokersFile, catalog: Catalog
       },
       { msgRate: 0, byteRate: 0, bindCount: 0, queuedMessages: 0 }
     );
-    const appMsgRate = clientRate.msgRate || queueRate.msgRate;
-    const appByteRate = clientRate.byteRate || queueRate.byteRate;
+    const fallbackMsgRate = mode === "sample" && (app.role === "emitter" || app.role === "both") ? 1 : 0;
+    const fallbackByteRate = fallbackMsgRate * 640;
+    const appMsgRate = clientRate.msgRate || queueRate.msgRate || fallbackMsgRate;
+    const appByteRate = clientRate.byteRate || queueRate.byteRate || fallbackByteRate;
     const appNodeId = `app:${app.id}`;
 
     addNode(nodes, {

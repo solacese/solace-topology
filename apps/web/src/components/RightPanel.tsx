@@ -14,7 +14,7 @@ export function RightPanel({ snapshot, selected, onSelect }: RightPanelProps) {
 
   return (
     <aside className="right-panel" aria-label="Topology details">
-      <section className={selected ? "detail-drawer open" : "detail-drawer"} aria-label="Selected element details">
+      <section className="detail-drawer open" aria-label="Selected element details">
         {selected ? (
           <>
             <button className="icon-button close" onClick={() => onSelect(undefined)} aria-label="Close details">
@@ -57,7 +57,13 @@ export function RightPanel({ snapshot, selected, onSelect }: RightPanelProps) {
               </div>
             ))}
           </>
-        ) : null}
+        ) : (
+          <div className="empty-detail">
+            <Database size={22} />
+            <h2>Route Details</h2>
+            <p>Select an emitter, broker, or listener to show the active event path.</p>
+          </div>
+        )}
       </section>
     </aside>
   );

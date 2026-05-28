@@ -1,7 +1,7 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Activity, Database, RadioTower, Send, UsersRound } from "lucide-react";
 import { formatRate, type TopologyNode, type TopologySnapshot } from "@solace-topology/shared";
-import { buildStructuredTopology, relatedApplicationIds, relatedBrokerIds, type GraphFilters, type StructuredLink } from "../lib/graph.js";
+import { activeRouteNodeIds, brokerRouteOffsets, buildStructuredTopology, relatedBrokerIds, type GraphFilters, type StructuredLink, type StructuredTopology } from "../lib/graph.js";
 
 interface TopologyGraphProps {
   snapshot: TopologySnapshot;
@@ -14,6 +14,7 @@ interface RenderedLink extends StructuredLink {
   path: string;
   width: number;
   selected: boolean;
+  dimmed: boolean;
 }
 
 function roleLabel(role: string | undefined): string {
@@ -48,25 +49,63 @@ function brokerKindLabel(kind: "edge" | "cloud" | "core"): string {
   return "Core broker";
 }
 
+function orderActiveNodes(nodes: TopologyNode[], activeIds: Set<string>, selectedId: string | undefined): TopologyNode[] {
+  if (!selectedId || activeIds.size === 0) {
+    return nodes;
+  }
+  return [...nodes].sort((left, right) => {
+    const leftSelected = left.id === selectedId ? 0 : 1;
+    const rightSelected = right.id === selectedId ? 0 : 1;
+    if (leftSelected !== rightSelected) {
+      return leftSelected - rightSelected;
+    }
+    const leftActive = activeIds.has(left.id) ? 0 : 1;
+    const rightActive = activeIds.has(right.id) ? 0 : 1;
+    if (leftActive !== rightActive) {
+      return leftActive - rightActive;
+    }
+    return left.label.localeCompare(right.label);
+  });
+}
+
+function orderTopology(topology: StructuredTopology, activeIds: Set<string>, selectedId: string | undefined): StructuredTopology {
+  return {
+    ...topology,
+    emitters: orderActiveNodes(topology.emitters, activeIds, selectedId),
+    brokers: orderActiveNodes(topology.brokers, activeIds, selectedId),
+    listeners: orderActiveNodes(topology.listeners, activeIds, selectedId)
+  };
+}
+
 function NodeCard({
   node,
   tone,
   selected,
+  dimmed,
+  routeOffset,
   onSelect,
   setNodeRef
 }: {
   node: TopologyNode;
   tone: "emitter" | "broker" | "listener";
   selected: boolean;
-  onSelect: (node: TopologyNode) => void;
+  dimmed: boolean;
+  routeOffset: number;
+  onSelect: (node: TopologyNode | undefined) => void;
   setNodeRef: (id: string) => (element: HTMLButtonElement | null) => void;
 }) {
   const Icon = tone === "emitter" ? Send : tone === "listener" ? UsersRound : RadioTower;
   const provenance = String(node.metadata?.provenance ?? "");
   const location = tone === "broker" ? String(node.metadata?.physicalLocation ?? node.metadata?.site ?? "") : "";
   const kind = tone === "broker" ? brokerKind(node) : "";
+  const style = routeOffset ? ({ "--route-offset": `${routeOffset}px` } as CSSProperties) : undefined;
   return (
-    <button ref={setNodeRef(node.id)} className={`topology-node ${tone}${kind ? ` ${kind}` : ""}${selected ? " selected" : ""}`} onClick={() => onSelect(node)}>
+    <button
+      ref={setNodeRef(node.id)}
+      className={`topology-node ${tone}${kind ? ` ${kind}` : ""}${selected ? " selected" : ""}${dimmed ? " dimmed" : ""}${routeOffset ? " route-offset" : ""}`}
+      style={style}
+      onClick={() => onSelect(selected ? undefined : node)}
+    >
       <span className="node-icon">
         <Icon size={17} />
       </span>
@@ -83,8 +122,10 @@ function NodeCard({
 
 export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: TopologyGraphProps) {
   const topology = useMemo(() => buildStructuredTopology(snapshot, filters), [filters, snapshot]);
-  const relatedIds = useMemo(() => relatedApplicationIds(snapshot, selectedId), [selectedId, snapshot]);
   const relatedBrokers = useMemo(() => relatedBrokerIds(snapshot, selectedId), [selectedId, snapshot]);
+  const activeIds = useMemo(() => activeRouteNodeIds(snapshot, selectedId), [selectedId, snapshot]);
+  const routeOffsets = useMemo(() => brokerRouteOffsets(snapshot, selectedId), [selectedId, snapshot]);
+  const orderedTopology = useMemo(() => orderTopology(topology, activeIds, selectedId), [activeIds, selectedId, topology]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const refs = useRef(new Map<string, HTMLButtonElement>());
   const [links, setLinks] = useState<RenderedLink[]>([]);
@@ -108,7 +149,7 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
         return;
       }
       const containerRect = container.getBoundingClientRect();
-      const rendered = topology.links.flatMap((link) => {
+      const rendered = orderedTopology.links.flatMap((link) => {
         const source = refs.current.get(link.source);
         const target = refs.current.get(link.target);
         if (!source || !target) {
@@ -121,18 +162,18 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
         const x2 = targetRect.left + targetRect.width / 2 - containerRect.left;
         const y2 = targetRect.top + targetRect.height / 2 - containerRect.top + container.scrollTop;
         const mid = x1 + (x2 - x1) * 0.5;
+        const activeLink = Boolean(
+          selectedId &&
+            activeIds.has(link.source) &&
+            activeIds.has(link.target) &&
+            (link.kind !== "mesh" || (relatedBrokers.has(link.source.replace(/^broker:/, "")) && relatedBrokers.has(link.target.replace(/^broker:/, ""))))
+        );
         return [
           {
             ...link,
             width: link.kind === "mesh" ? 2.2 : Math.min(1.5 + Math.sqrt(link.msgRate) * 0.08, 7),
-            selected: Boolean(
-              selectedId &&
-                (link.source === selectedId ||
-                  link.target === selectedId ||
-                  relatedIds.has(link.source) ||
-                  relatedIds.has(link.target) ||
-                  (link.kind === "mesh" && relatedBrokers.has(link.source.replace(/^broker:/, "")) && relatedBrokers.has(link.target.replace(/^broker:/, ""))))
-            ),
+            selected: activeLink,
+            dimmed: Boolean(selectedId && !activeLink),
             path: `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`
           }
         ];
@@ -154,7 +195,7 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
       window.clearTimeout(timer);
       containerRef.current?.removeEventListener("scroll", drawLinks);
     };
-  }, [relatedBrokers, relatedIds, selectedId, topology]);
+  }, [activeIds, orderedTopology, relatedBrokers, selectedId]);
 
   const maxY = Math.max(
     640,
@@ -168,10 +209,19 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
 
   return (
     <section className="graph-shell" aria-label="Topology graph">
-      <div className="structured-map" ref={containerRef}>
+      <div
+        className="structured-map"
+        ref={containerRef}
+        onClick={(event) => {
+          const target = event.target instanceof Element ? event.target : undefined;
+          if (target && !target.closest(".topology-node, .column-heading, .graph-count")) {
+            onSelect(undefined);
+          }
+        }}
+      >
         <svg className="map-links" aria-hidden="true" height={maxY + 80}>
           {links.map((link) => (
-            <path key={link.id} className={`map-link ${link.kind}${link.selected ? " selected" : ""}`} d={link.path} strokeWidth={link.selected ? link.width + 2 : link.width} />
+            <path key={link.id} className={`map-link ${link.kind}${link.selected ? " selected" : ""}${link.dimmed ? " dimmed" : ""}`} d={link.path} strokeWidth={link.selected ? link.width + 2 : link.width} />
           ))}
         </svg>
 
@@ -180,11 +230,11 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
             <Send size={17} />
             <div>
               <span>Emitting Apps</span>
-              <strong>{topology.emitters.length}</strong>
+              <strong>{orderedTopology.emitters.length}</strong>
             </div>
           </div>
-          {topology.emitters.map((node) => (
-            <NodeCard key={node.id} node={node} tone="emitter" selected={selectedId === node.id} onSelect={onSelect} setNodeRef={setNodeRef} />
+          {orderedTopology.emitters.map((node) => (
+            <NodeCard key={node.id} node={node} tone="emitter" selected={selectedId === node.id} dimmed={Boolean(selectedId && !activeIds.has(node.id))} routeOffset={0} onSelect={onSelect} setNodeRef={setNodeRef} />
           ))}
         </div>
 
@@ -193,11 +243,11 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
             <Database size={17} />
             <div>
               <span>Brokers</span>
-              <strong>{topology.brokers.length}</strong>
+              <strong>{orderedTopology.brokers.length}</strong>
             </div>
           </div>
-          {topology.brokers.map((node) => (
-            <NodeCard key={node.id} node={node} tone="broker" selected={selectedId === node.id} onSelect={onSelect} setNodeRef={setNodeRef} />
+          {orderedTopology.brokers.map((node) => (
+            <NodeCard key={node.id} node={node} tone="broker" selected={selectedId === node.id} dimmed={Boolean(selectedId && !activeIds.has(node.id))} routeOffset={routeOffsets.get(node.id) ?? 0} onSelect={onSelect} setNodeRef={setNodeRef} />
           ))}
         </div>
 
@@ -206,17 +256,17 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
             <UsersRound size={17} />
             <div>
               <span>Listening Apps</span>
-              <strong>{topology.listeners.length}</strong>
+              <strong>{orderedTopology.listeners.length}</strong>
             </div>
           </div>
-          {topology.listeners.map((node) => (
-            <NodeCard key={node.id} node={node} tone="listener" selected={selectedId === node.id} onSelect={onSelect} setNodeRef={setNodeRef} />
+          {orderedTopology.listeners.map((node) => (
+            <NodeCard key={node.id} node={node} tone="listener" selected={selectedId === node.id} dimmed={Boolean(selectedId && !activeIds.has(node.id))} routeOffset={0} onSelect={onSelect} setNodeRef={setNodeRef} />
           ))}
         </div>
 
         <div className="graph-count">
           <Activity size={15} />
-          {topology.emitters.length} emitters / {topology.brokers.length} brokers / {topology.listeners.length} listeners
+          {orderedTopology.emitters.length} publishers, {orderedTopology.brokers.length} brokers, {orderedTopology.listeners.length} subscribers
         </div>
       </div>
     </section>

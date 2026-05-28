@@ -215,12 +215,17 @@ button {
   font-weight: 700;
 }
 
+.top-action.active {
+  color: #001f18;
+  background: var(--solace);
+}
+
 .status-pill,
 .chip {
   display: inline-flex;
   align-items: center;
   height: 34px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 999px;
   color: #d8e5ee;
   background: rgba(255, 255, 255, 0.04);
@@ -248,7 +253,7 @@ button {
   place-items: center;
   width: 40px;
   height: 40px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 8px;
   color: #dcebf4;
   background: rgba(255, 255, 255, 0.05);
@@ -260,8 +265,8 @@ button {
   gap: 10px;
   flex-wrap: wrap;
   padding: 10px;
-  border: 1px solid var(--line);
-  background: rgba(12, 24, 37, 0.72);
+  border: 0;
+  background: rgba(12, 24, 37, 0.58);
   border-radius: 8px;
 }
 
@@ -318,13 +323,13 @@ button {
 }
 
 .workspace.has-detail {
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 510px;
 }
 
 .graph-shell,
 .right-panel {
   min-height: 0;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 8px;
   background: rgba(7, 16, 26, 0.76);
   overflow: hidden;
@@ -342,7 +347,7 @@ button {
   align-items: center;
   gap: 7px;
   color: #d9eaf2;
-  border: 1px solid var(--line);
+  border: 0;
   background: rgba(5, 13, 22, 0.82);
   border-radius: 999px;
   padding: 7px 10px;
@@ -371,6 +376,10 @@ button {
   fill: none;
   stroke-linecap: butt;
   opacity: 0.38;
+}
+
+.map-link.dimmed {
+  opacity: 0.055;
 }
 
 .map-link.emit {
@@ -414,7 +423,7 @@ button {
   gap: 10px;
   min-height: 52px;
   padding: 10px 12px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 8px;
   background: #0a1622;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
@@ -450,12 +459,27 @@ button {
   text-align: left;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
   z-index: 3;
+  transform: translateX(var(--route-offset, 0));
+  transition:
+    opacity 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease,
+    border-color 160ms ease;
 }
 
 .topology-node:hover,
 .topology-node.selected {
   border-color: rgba(0, 200, 149, 0.75);
   box-shadow: 0 0 0 2px rgba(0, 200, 149, 0.14);
+}
+
+.topology-node.dimmed {
+  opacity: 0.24;
+  filter: saturate(0.45);
+}
+
+.topology-node.dimmed:hover {
+  opacity: 0.64;
 }
 
 .topology-node.broker {
@@ -539,6 +563,7 @@ button {
   gap: 12px;
   padding: 12px;
   overflow-y: auto;
+  max-height: calc(100vh - 152px);
 }
 
 .panel-section {
@@ -551,8 +576,8 @@ button {
 .broker-settings-panel {
   display: grid;
   gap: 10px;
-  border: 1px solid var(--line);
-  background: rgba(12, 24, 37, 0.96);
+  border: 0;
+  background: rgba(12, 24, 37, 0.82);
   padding: 12px;
 }
 
@@ -627,7 +652,7 @@ button {
   align-items: center;
   gap: 8px;
   min-height: 38px;
-  border: 1px solid var(--line);
+  border: 0;
   color: #e5f0f7;
   background: rgba(5, 13, 22, 0.68);
   text-align: left;
@@ -756,21 +781,17 @@ button {
 .detail-drawer {
   position: sticky;
   bottom: 0;
-  max-height: 0;
-  overflow: hidden;
-  border: 1px solid transparent;
+  max-height: none;
+  overflow-y: auto;
+  border: 0;
   border-radius: 8px;
   background: var(--panel-strong);
-  transition:
-    max-height 180ms ease,
-    padding 180ms ease,
-    border-color 180ms ease;
 }
 
 .detail-drawer.open {
-  max-height: 680px;
-  padding: 16px;
-  border-color: rgba(0, 200, 149, 0.3);
+  max-height: none;
+  padding: 14px;
+  border-color: transparent;
   overflow-y: auto;
 }
 
@@ -818,6 +839,27 @@ button {
   overflow-wrap: anywhere;
 }
 
+.empty-detail {
+  min-height: 220px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.empty-detail svg {
+  color: var(--solace);
+}
+
+.empty-detail h2 {
+  margin: 0;
+  color: #eef6fb;
+}
+
+.empty-detail p {
+  max-width: 24ch;
+}
+
 .detail-section {
   margin-top: 14px;
   padding-top: 12px;
@@ -840,7 +882,7 @@ button {
 .detail-section li {
   display: grid;
   gap: 2px;
-  border: 1px solid rgba(173, 209, 228, 0.12);
+  border: 0;
   background: rgba(5, 13, 22, 0.44);
   padding: 8px;
 }
@@ -855,8 +897,8 @@ button {
 .yaml-editor-panel {
   display: grid;
   gap: 10px;
-  border: 1px solid var(--line);
-  background: rgba(12, 24, 37, 0.96);
+  border: 0;
+  background: rgba(12, 24, 37, 0.82);
   padding: 12px;
 }
 
@@ -965,14 +1007,10 @@ button {
   }
 
   .search-box,
+  .emitter-search,
   .control-group,
-  .provenance-group,
-  .live-toggle {
+  .provenance-group {
     width: 100%;
-  }
-
-  .live-toggle {
-    justify-content: center;
   }
 
   .structured-map {

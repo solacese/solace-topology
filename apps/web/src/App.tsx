@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { TopologyNode, TopologyScenario } from "@solace-topology/shared";
 import { FileCode2, Network, Power, Save, Settings, X } from "lucide-react";
 import { BrokerSettingsPanel } from "./components/BrokerSettingsPanel.js";
@@ -22,14 +22,11 @@ export function App() {
     provenances: new Set()
   });
 
-  const generatedAt = useMemo(() => {
-    if (!topology.snapshot) {
-      return "";
+  async function toggleYamlEditor() {
+    if (yamlOpen) {
+      setYamlOpen(false);
+      return;
     }
-    return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date(topology.snapshot.generatedAt));
-  }, [topology.snapshot]);
-
-  async function openYamlEditor() {
     setYamlError("");
     setYamlDraft(await topology.loadScenarioYaml());
     setYamlOpen(true);
@@ -119,13 +116,10 @@ export function App() {
             <Settings size={16} />
             Broker Settings
           </button>
-          <button className="top-action" onClick={() => void openYamlEditor()}>
+          <button className={yamlOpen ? "top-action active" : "top-action"} onClick={() => void toggleYamlEditor()}>
             <FileCode2 size={16} />
             YAML Config
           </button>
-          <span className={topology.paused ? "status-pill paused" : "status-pill"}>
-            {topology.paused ? "Paused" : `Live ${generatedAt}`}
-          </span>
           <button className="icon-button" onClick={topology.signOut} aria-label="Sign out">
             <Power size={18} />
           </button>
@@ -164,11 +158,11 @@ export function App() {
         </section>
       ) : null}
 
-      <Toolbar snapshot={topology.snapshot} filters={filters} paused={topology.paused} onFiltersChange={setFilters} onPausedChange={topology.setPaused} />
+      <Toolbar snapshot={topology.snapshot} filters={filters} onFiltersChange={setFilters} />
 
-      <section className={selected ? "workspace has-detail" : "workspace"}>
+      <section className="workspace has-detail">
         <TopologyGraph snapshot={topology.snapshot} filters={filters} selectedId={selected?.id} onSelect={setSelected} />
-        {selected ? <RightPanel snapshot={topology.snapshot} selected={selected} onSelect={setSelected} /> : null}
+        <RightPanel snapshot={topology.snapshot} selected={selected} onSelect={setSelected} />
       </section>
     </main>
   );

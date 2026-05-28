@@ -196,6 +196,118 @@ export function relatedBrokerIds(snapshot: TopologySnapshot, selectedId: string 
   return brokers;
 }
 
+export function activeRouteNodeIds(snapshot: TopologySnapshot, selectedId: string | undefined): Set<string> {
+  if (!selectedId) {
+    return new Set();
+  }
+  const selected = nodeById(snapshot, selectedId);
+  if (!selected) {
+    return new Set();
+  }
+  if (selected.type === "Broker") {
+    const brokerId = selected.id.replace(/^broker:/, "");
+    const active = new Set([selected.id]);
+    for (const app of snapshot.nodes.filter((node) => node.type === "Application")) {
+      if (brokerIdsForApp(app, snapshot.edges).includes(brokerId)) {
+        active.add(app.id);
+      }
+    }
+    return active;
+  }
+  if (selected.type === "Application") {
+    const active = new Set<string>();
+    for (const appId of relatedApplicationIds(snapshot, selectedId)) {
+      active.add(appId);
+    }
+    for (const brokerId of relatedBrokerIds(snapshot, selectedId)) {
+      active.add(`broker:${brokerId}`);
+    }
+    return active;
+  }
+  return new Set([selected.id]);
+}
+
+function publisherSubscriberBrokerPairs(snapshot: TopologySnapshot): Array<{ from: string; to: string }> {
+  const pairs: Array<{ from: string; to: string }> = [];
+  const emitters = snapshot.nodes.filter((node) => node.type === "Application" && ["emitter", "both"].includes(roleOf(node)));
+  const listeners = snapshot.nodes.filter((node) => node.type === "Application" && ["listener", "both"].includes(roleOf(node)));
+
+  for (const emitter of emitters) {
+    const sourceTopics = publishedTopics(snapshot, emitter.id);
+    const sourceBrokers = brokerIdsForApp(emitter, snapshot.edges);
+    for (const listener of listeners) {
+      const targetTopics = listenerTopics(snapshot, listener.id);
+      if (!sourceTopics.some((sourceTopic) => targetTopics.some((targetTopic) => topicPatternsOverlap(sourceTopic, targetTopic)))) {
+        continue;
+      }
+      for (const from of sourceBrokers) {
+        for (const to of brokerIdsForApp(listener, snapshot.edges)) {
+          pairs.push({ from, to });
+        }
+      }
+    }
+  }
+
+  return pairs;
+}
+
+export function brokerRouteOffsets(snapshot: TopologySnapshot, selectedId: string | undefined): Map<string, number> {
+  if (!selectedId) {
+    return new Map();
+  }
+  const selected = nodeById(snapshot, selectedId);
+  if (!selected) {
+    return new Map();
+  }
+
+  const mesh = brokerMesh(snapshot);
+  let pairs: Array<{ from: string; to: string }> = [];
+
+  if (selected.type === "Application") {
+    const relatedApps = relatedApplicationIds(snapshot, selectedId);
+    const role = roleOf(selected);
+    if (role === "emitter" || role === "both") {
+      const sources = brokerIdsForApp(selected, snapshot.edges);
+      const targets = snapshot.nodes
+        .filter((node) => relatedApps.has(node.id) && node.id !== selectedId && ["listener", "both"].includes(roleOf(node)))
+        .flatMap((node) => brokerIdsForApp(node, snapshot.edges));
+      pairs = sources.flatMap((from) => targets.map((to) => ({ from, to })));
+    }
+    if (role === "listener" || role === "both") {
+      const targets = brokerIdsForApp(selected, snapshot.edges);
+      const sources = snapshot.nodes
+        .filter((node) => relatedApps.has(node.id) && node.id !== selectedId && ["emitter", "both"].includes(roleOf(node)))
+        .flatMap((node) => brokerIdsForApp(node, snapshot.edges));
+      pairs = sources.flatMap((from) => targets.map((to) => ({ from, to })));
+    }
+  }
+
+  if (selected.type === "Broker") {
+    const brokerId = selected.id.replace(/^broker:/, "");
+    pairs = publisherSubscriberBrokerPairs(snapshot).filter((pair) => shortestBrokerPath(mesh, pair.from, pair.to).includes(brokerId));
+  }
+
+  const positions = new Map<string, number[]>();
+  for (const pair of pairs) {
+    const path = shortestBrokerPath(mesh, pair.from, pair.to);
+    if (path.length <= 1) {
+      positions.set(pair.from, [...(positions.get(pair.from) ?? []), 0]);
+      continue;
+    }
+    path.forEach((brokerId, index) => {
+      const normalized = -1 + (index / (path.length - 1)) * 2;
+      positions.set(brokerId, [...(positions.get(brokerId) ?? []), normalized]);
+    });
+  }
+
+  const offsets = new Map<string, number>();
+  for (const [brokerId, values] of positions) {
+    const average = values.reduce((sum, value) => sum + value, 0) / values.length;
+    offsets.set(`broker:${brokerId}`, Math.round(average * 26));
+  }
+  return offsets;
+}
+
 export function buildStructuredTopology(snapshot: TopologySnapshot, filters: GraphFilters): StructuredTopology {
   const query = filters.search.trim().toLowerCase();
   const applicationNodes = snapshot.nodes.filter(isApplication).filter((node) => nodeMatchesSearch(node, query)).filter((node) => nodeMatchesProvenance(node, filters.provenances));

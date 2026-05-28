@@ -112,7 +112,7 @@ export function buildStaticSnapshot(scenario: TopologyScenario): TopologySnapsho
   }
 
   for (const app of scenario.applications) {
-    const appRate = app.role === "listener" ? rate(app.id, 80, 900) : rate(app.id, 160, 2_400);
+    const appRate = Math.max(1, app.role === "listener" ? rate(app.id, 80, 900) : rate(app.id, 160, 2_400));
     const metrics: MetricBag = { msgRate: appRate, byteRate: appRate * 720 };
     const appId = `app:${app.id}`;
     addNode(nodes, {
