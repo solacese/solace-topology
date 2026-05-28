@@ -19,12 +19,15 @@ interface RenderedLink extends StructuredLink {
 
 function roleLabel(role: string | undefined): string {
   if (role === "emitter") {
-    return "Emitter";
+    return "Publisher";
   }
   if (role === "listener") {
-    return "Listener";
+    return "Subscriber";
   }
-  return "Broker";
+  if (role === "both") {
+    return "Publisher / Subscriber";
+  }
+  return "Application";
 }
 
 function brokerKind(node: TopologyNode): "edge" | "cloud" | "core" {
@@ -229,7 +232,7 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
           <div className="column-heading">
             <Send size={17} />
             <div>
-              <span>Emitting Apps</span>
+              <span>Publishers</span>
               <strong>{orderedTopology.emitters.length}</strong>
             </div>
           </div>
@@ -255,7 +258,7 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
           <div className="column-heading">
             <UsersRound size={17} />
             <div>
-              <span>Listening Apps</span>
+              <span>Subscribers</span>
               <strong>{orderedTopology.listeners.length}</strong>
             </div>
           </div>

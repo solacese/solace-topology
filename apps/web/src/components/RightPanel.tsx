@@ -9,6 +9,28 @@ interface RightPanelProps {
   onSelect: (item: TopologyNode | undefined) => void;
 }
 
+function displayMetadataKey(key: string): string {
+  if (key === "role") {
+    return "role";
+  }
+  return key;
+}
+
+function displayMetadataValue(key: string, value: string | number | boolean | string[] | undefined): string {
+  if (key === "role") {
+    if (value === "emitter") {
+      return "publisher";
+    }
+    if (value === "listener") {
+      return "subscriber";
+    }
+    if (value === "both") {
+      return "publisher / subscriber";
+    }
+  }
+  return Array.isArray(value) ? value.join(", ") : String(value);
+}
+
 export function RightPanel({ snapshot, selected, onSelect }: RightPanelProps) {
   const detailSections = useMemo(() => (selected ? selectionDetailSections(snapshot, selected) : []), [selected, snapshot]);
 
@@ -34,8 +56,8 @@ export function RightPanel({ snapshot, selected, onSelect }: RightPanelProps) {
               </div>
               {Object.entries(selected.metadata ?? {}).map(([key, value]) => (
                 <div key={key}>
-                  <dt>{key}</dt>
-                  <dd>{Array.isArray(value) ? value.join(", ") : String(value)}</dd>
+                  <dt>{displayMetadataKey(key)}</dt>
+                  <dd>{displayMetadataValue(key, value)}</dd>
                 </div>
               ))}
             </dl>
@@ -61,7 +83,7 @@ export function RightPanel({ snapshot, selected, onSelect }: RightPanelProps) {
           <div className="empty-detail">
             <Database size={22} />
             <h2>Route Details</h2>
-            <p>Select an emitter, broker, or listener to show the active event path.</p>
+            <p>Select a publisher, broker, or subscriber to show the active event path.</p>
           </div>
         )}
       </section>

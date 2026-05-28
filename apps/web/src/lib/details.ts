@@ -47,8 +47,8 @@ function queueSubscriptions(snapshot: TopologySnapshot, queueId: string): string
     .filter((value): value is string => Boolean(value));
 }
 
-function queuesForListener(snapshot: TopologySnapshot, listenerId: string): Array<{ queue: TopologyNode; topics: string[] }> {
-  return edgesFrom(snapshot, listenerId, "CONSUMES_FROM")
+function queuesForSubscriber(snapshot: TopologySnapshot, subscriberId: string): Array<{ queue: TopologyNode; topics: string[] }> {
+  return edgesFrom(snapshot, subscriberId, "CONSUMES_FROM")
     .map((edge) => nodeById(snapshot, edge.target))
     .filter((node): node is TopologyNode => Boolean(node))
     .map((queue) => ({ queue, topics: queueSubscriptions(snapshot, queue.id) }));
@@ -64,35 +64,35 @@ function brokerDetailItems(snapshot: TopologySnapshot, app: TopologyNode): Detai
   });
 }
 
-function publishedTopics(snapshot: TopologySnapshot, emitterId: string): string[] {
-  return edgesFrom(snapshot, emitterId, "PUBLISHES_TO")
+function publishedTopics(snapshot: TopologySnapshot, publisherId: string): string[] {
+  return edgesFrom(snapshot, publisherId, "PUBLISHES_TO")
     .map((edge) => nodeById(snapshot, edge.target)?.label)
     .filter((value): value is string => Boolean(value));
 }
 
-function sourceEmittersForListener(snapshot: TopologySnapshot, listener: TopologyNode): DetailItem[] {
-  const subscriptionTopics = queuesForListener(snapshot, listener.id).flatMap(({ topics }) => topics);
-  const emitters = snapshot.nodes.filter((node) => node.type === "Application" && ["emitter", "both"].includes(String(node.metadata?.role ?? "")));
-  const items = emitters.flatMap((emitter) => {
-    const sourceTopics = publishedTopics(snapshot, emitter.id).filter((publishTopic) => subscriptionTopics.some((topic) => topicPatternsOverlap(publishTopic, topic)));
+function sourcePublishersForSubscriber(snapshot: TopologySnapshot, subscriber: TopologyNode): DetailItem[] {
+  const subscriptionTopics = queuesForSubscriber(snapshot, subscriber.id).flatMap(({ topics }) => topics);
+  const publishers = snapshot.nodes.filter((node) => node.type === "Application" && ["emitter", "both"].includes(String(node.metadata?.role ?? "")));
+  const items = publishers.flatMap((publisher) => {
+    const sourceTopics = publishedTopics(snapshot, publisher.id).filter((publishTopic) => subscriptionTopics.some((topic) => topicPatternsOverlap(publishTopic, topic)));
     return sourceTopics.map((topic) => ({
-      title: emitter.label,
-      detail: `${topic} via ${brokerDetailItems(snapshot, emitter).map((broker) => broker.title).join(", ")}`
+      title: publisher.label,
+      detail: `${topic} via ${brokerDetailItems(snapshot, publisher).map((broker) => broker.title).join(", ")}`
     }));
   });
   return items.slice(0, 12);
 }
 
-function downstreamListenersForEmitter(snapshot: TopologySnapshot, emitter: TopologyNode, publishTopics: string[]): DetailItem[] {
-  const listeners = snapshot.nodes.filter((node) => node.type === "Application" && ["listener", "both"].includes(String(node.metadata?.role ?? "")));
-  return listeners
-    .flatMap((listener) =>
-      queuesForListener(snapshot, listener.id).flatMap(({ queue, topics }) =>
+function downstreamSubscribersForPublisher(snapshot: TopologySnapshot, publisher: TopologyNode, publishTopics: string[]): DetailItem[] {
+  const subscribers = snapshot.nodes.filter((node) => node.type === "Application" && ["listener", "both"].includes(String(node.metadata?.role ?? "")));
+  return subscribers
+    .flatMap((subscriber) =>
+      queuesForSubscriber(snapshot, subscriber.id).flatMap(({ queue, topics }) =>
         topics
           .filter((topic) => publishTopics.some((publishTopic) => topicPatternsOverlap(publishTopic, topic)))
           .map((topic) => ({
-            title: listener.label,
-            detail: `${queue.label} via ${brokerDetailItems(snapshot, listener).map((broker) => broker.title).join(", ")} / ${topic}`
+            title: subscriber.label,
+            detail: `${queue.label} via ${brokerDetailItems(snapshot, subscriber).map((broker) => broker.title).join(", ")} / ${topic}`
           }))
       )
     )
@@ -104,7 +104,7 @@ export function selectionDetailSections(snapshot: TopologySnapshot, selected: To
 
   if (selected.type === "Broker") {
     const brokerId = String(selected.metadata?.brokerId ?? selected.id.replace(/^broker:/, ""));
-    const listeners = snapshot.nodes.filter((node) => node.type === "Application" && ["listener", "both"].includes(String(node.metadata?.role ?? "")) && brokerIds(node).includes(brokerId));
+    const subscribers = snapshot.nodes.filter((node) => node.type === "Application" && ["listener", "both"].includes(String(node.metadata?.role ?? "")) && brokerIds(node).includes(brokerId));
     return [
       {
         title: "Physical Location",
@@ -116,10 +116,10 @@ export function selectionDetailSections(snapshot: TopologySnapshot, selected: To
       },
       {
         title: "Managed Subscriptions",
-        items: listeners.flatMap((listener) =>
-          queuesForListener(snapshot, listener.id).flatMap(({ queue, topics }) =>
+        items: subscribers.flatMap((subscriber) =>
+          queuesForSubscriber(snapshot, subscriber.id).flatMap(({ queue, topics }) =>
             topics.map((topic) => ({
-              title: listener.label,
+              title: subscriber.label,
               detail: `${queue.label} subscribes to ${topic}`
             }))
           )
@@ -140,14 +140,14 @@ export function selectionDetailSections(snapshot: TopologySnapshot, selected: To
         items: publishTopics.map((topic) => ({ title: topic, detail: "Declared publisher topic pattern" }))
       },
       {
-        title: "Downstream Listeners",
-        items: downstreamListenersForEmitter(snapshot, selected, publishTopics)
+        title: "Downstream Subscribers",
+        items: downstreamSubscribersForPublisher(snapshot, selected, publishTopics)
       }
     ];
   }
 
   if (selected.type === "Application" && role === "listener") {
-    const subscriptions = queuesForListener(snapshot, selected.id).flatMap(({ queue, topics }) =>
+    const subscriptions = queuesForSubscriber(snapshot, selected.id).flatMap(({ queue, topics }) =>
       topics.map((topic) => ({
         title: queue.label,
         detail: `Subscribes to ${topic}`
@@ -163,8 +163,8 @@ export function selectionDetailSections(snapshot: TopologySnapshot, selected: To
         items: subscriptions
       },
       {
-        title: "Source Emitters",
-        items: sourceEmittersForListener(snapshot, selected)
+        title: "Source Publishers",
+        items: sourcePublishersForSubscriber(snapshot, selected)
       }
     ];
   }

@@ -1,11 +1,11 @@
 # Solace Topology
 
 Open-source proof of concept for mapping a Solace PubSub+ event mesh: brokers,
-emitting applications, listening applications, topic provenance, ownership, and
+publishers, subscribers, topic provenance, ownership, and
 live throughput.
 
-The first demo profile models a public automotive event mesh with 4 brokers,
-15 emitting applications, and 5 listening applications. It connects to real
+The first demo profile models a public automotive event mesh with 10 brokers,
+15 publishers, and 5 subscribers. It connects to real
 brokers through read-only SEMP v2 when configured, and falls back to a built-in
 sample topology for offline demos.
 
