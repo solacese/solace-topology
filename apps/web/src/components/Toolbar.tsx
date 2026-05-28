@@ -1,5 +1,5 @@
 import type { TopologySnapshot } from "@solace-topology/shared";
-import { Search, ShieldCheck } from "lucide-react";
+import { Search } from "lucide-react";
 import { availableProvenances, type GraphFilters } from "../lib/graph.js";
 
 interface ToolbarProps {
@@ -34,7 +34,6 @@ export function Toolbar({ snapshot, filters, onFiltersChange }: ToolbarProps) {
       </div>
 
       <div className="control-group provenance-group" aria-label="Provenance filters">
-        <ShieldCheck size={16} />
         {provenances.map((provenance) => (
           <button
             key={provenance}

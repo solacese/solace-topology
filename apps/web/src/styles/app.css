@@ -16,6 +16,10 @@
   --amber: #ffc857;
   --orange: #ff7a59;
   --danger: #ff5c7a;
+  --space: 14px;
+  --control-h: 38px;
+  --font-ui: 0.82rem;
+  --font-small: 0.72rem;
 }
 
 * {
@@ -28,11 +32,14 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: #08111c;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1.3;
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -56,8 +63,8 @@ button {
 }
 
 .brand-mark.small {
-  width: 44px;
-  height: 44px;
+  width: var(--control-h);
+  height: var(--control-h);
   justify-content: center;
   border: 1px solid rgba(0, 200, 149, 0.35);
   border-radius: 8px;
@@ -77,6 +84,7 @@ button {
   border: 1px solid var(--line);
   background: rgba(5, 13, 22, 0.82);
   border-radius: 8px;
+  height: var(--control-h);
   padding: 0 12px;
 }
 
@@ -87,7 +95,8 @@ button {
   outline: 0;
   color: #f7fbff;
   background: transparent;
-  height: 44px;
+  height: 100%;
+  font-size: var(--font-ui);
 }
 
 .form-error,
@@ -103,8 +112,8 @@ button {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto auto 1fr;
-  gap: 12px;
-  padding: 14px;
+  gap: var(--space);
+  padding: var(--space);
 }
 
 .app-header {
@@ -117,7 +126,7 @@ button {
 .app-title {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--space);
   min-width: 0;
 }
 
@@ -130,8 +139,8 @@ button {
 }
 
 .app-title h1 {
-  font-size: clamp(1.2rem, 1.8vw, 1.72rem);
-  margin: 0 0 2px;
+  font-size: 1.26rem;
+  margin: 0;
   letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -141,7 +150,7 @@ button {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex: 0 0 auto;
 }
 
@@ -151,27 +160,29 @@ button {
   align-items: center;
   gap: 8px;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--font-small);
 }
 
 .scenario-select select {
-  height: 36px;
+  height: var(--control-h);
   border: 1px solid var(--line);
   color: #eef6fb;
   background: rgba(5, 13, 22, 0.82);
   padding: 0 10px;
+  font-size: var(--font-ui);
 }
 
 .top-action {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  height: 36px;
+  height: var(--control-h);
   border: 1px solid var(--line);
   color: #dcebf4;
   background: rgba(255, 255, 255, 0.05);
   padding: 0 11px;
   font-weight: 700;
+  font-size: var(--font-ui);
 }
 
 .top-action.active {
@@ -210,8 +221,8 @@ button {
 .icon-button {
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: var(--control-h);
+  height: var(--control-h);
   border: 0;
   border-radius: 8px;
   color: #dcebf4;
@@ -223,9 +234,9 @@ button {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 10px;
+  padding: 0;
   border: 0;
-  background: rgba(12, 24, 37, 0.58);
+  background: transparent;
   border-radius: 8px;
 }
 
@@ -242,8 +253,8 @@ button {
 }
 
 .chip {
-  height: 32px;
-  font-size: 0.82rem;
+  height: var(--control-h);
+  font-size: var(--font-ui);
 }
 
 .chip.active {
@@ -270,7 +281,7 @@ button {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
+  gap: var(--space);
 }
 
 .workspace.has-detail {
@@ -292,8 +303,8 @@ button {
 
 .graph-count {
   position: absolute;
-  left: 14px;
-  bottom: 14px;
+  left: var(--space);
+  bottom: var(--space);
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -302,7 +313,7 @@ button {
   background: rgba(5, 13, 22, 0.82);
   border-radius: 999px;
   padding: 7px 10px;
-  font-size: 0.82rem;
+  font-size: var(--font-ui);
 }
 
 .structured-map {
@@ -310,7 +321,7 @@ button {
   min-height: 620px;
   height: 100%;
   overflow: auto;
-  padding: 18px 18px 56px;
+  padding: 0 0 56px;
   isolation: isolate;
 }
 
@@ -362,7 +373,7 @@ button {
 .structured-map {
   display: grid;
   grid-template-columns: minmax(240px, 1fr) minmax(230px, 0.82fr) minmax(240px, 1fr);
-  gap: clamp(22px, 4vw, 68px);
+  gap: clamp(18px, 4vw, 56px);
 }
 
 .column-heading {
@@ -372,8 +383,8 @@ button {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 52px;
-  padding: 10px 12px;
+  min-height: var(--control-h);
+  padding: 8px 10px;
   border: 0;
   border-radius: 8px;
   background: #0a1622;
@@ -387,11 +398,11 @@ button {
 .column-heading span {
   display: block;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: var(--font-small);
 }
 
 .column-heading strong {
-  font-size: 1.03rem;
+  font-size: 0.95rem;
 }
 
 .topology-node {
@@ -401,8 +412,8 @@ button {
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 54px;
-  padding: 8px;
+  min-height: 50px;
+  padding: 8px 10px;
   border: 1px solid rgba(173, 209, 228, 0.16);
   border-radius: 8px;
   color: #eef6fb;
@@ -434,7 +445,7 @@ button {
 }
 
 .topology-node.broker {
-  min-height: 66px;
+  min-height: 58px;
   background: #07313d;
 }
 
@@ -460,8 +471,8 @@ button {
 .node-icon {
   display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 8px;
   color: #06231b;
   background: var(--solace);
@@ -489,20 +500,20 @@ button {
 }
 
 .node-content strong {
-  font-size: 0.78rem;
+  font-size: var(--font-ui);
   line-height: 1.16;
 }
 
 .node-content span {
   margin-top: 2px;
   color: var(--text-muted);
-  font-size: 0.66rem;
+  font-size: var(--font-small);
   line-height: 1.18;
 }
 
 .node-rate {
   color: #d8f7ef;
-  font-size: 0.68rem;
+  font-size: var(--font-small);
   font-weight: 800;
   white-space: nowrap;
 }
