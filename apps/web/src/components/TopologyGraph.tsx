@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Activity, Database, RadioTower, Send, UsersRound } from "lucide-react";
+import { Database, RadioTower, Send, UsersRound } from "lucide-react";
 import { formatRate, type TopologyNode, type TopologySnapshot } from "@solace-topology/shared";
 import { activeRouteNodeIds, brokerRouteOffsets, buildStructuredTopology, relatedBrokerIds, type GraphFilters, type StructuredLink, type StructuredTopology } from "../lib/graph.js";
 
@@ -297,10 +297,6 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
         </div>
 
         <div className="graph-count">
-          <Activity size={15} />
-          <span>
-            {orderedTopology.emitters.length} publishers, {orderedTopology.brokers.length} brokers, {orderedTopology.listeners.length} subscribers
-          </span>
           <label className="sort-control">
             <span>Sort</span>
             <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
