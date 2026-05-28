@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { TopologyNode, TopologyScenario } from "@solace-topology/shared";
-import { FileCode2, Network, Power, Save, X } from "lucide-react";
+import { FileCode2, Network, Power, Save, Settings, X } from "lucide-react";
+import { BrokerSettingsPanel } from "./components/BrokerSettingsPanel.js";
 import { LoginPanel } from "./components/LoginPanel.js";
 import { RightPanel } from "./components/RightPanel.js";
 import { Toolbar } from "./components/Toolbar.js";
@@ -13,6 +14,7 @@ export function App() {
   const topology = useTopology();
   const [selected, setSelected] = useState<TopologyNode | undefined>();
   const [yamlOpen, setYamlOpen] = useState(false);
+  const [brokerSettingsOpen, setBrokerSettingsOpen] = useState(false);
   const [yamlDraft, setYamlDraft] = useState("");
   const [yamlError, setYamlError] = useState("");
   const [filters, setFilters] = useState<GraphFilters>({
@@ -113,9 +115,13 @@ export function App() {
               ))}
             </select>
           </label>
+          <button className="top-action" onClick={() => setBrokerSettingsOpen((open) => !open)}>
+            <Settings size={16} />
+            Broker Settings
+          </button>
           <button className="top-action" onClick={() => void openYamlEditor()}>
             <FileCode2 size={16} />
-            YAML
+            YAML Config
           </button>
           <span className={topology.paused ? "status-pill paused" : "status-pill"}>
             {topology.paused ? "Paused" : `Live ${generatedAt}`}
@@ -128,10 +134,20 @@ export function App() {
 
       {topology.error ? <div className="app-alert">{topology.error}</div> : null}
 
+      {brokerSettingsOpen ? (
+        <BrokerSettingsPanel
+          snapshot={topology.snapshot}
+          scenarioConfig={topology.scenarioConfig}
+          onSelect={setSelected}
+          onSaveBroker={(record) => void saveBroker(record)}
+          onRemoveBroker={(brokerId) => void removeBroker(brokerId)}
+        />
+      ) : null}
+
       {yamlOpen ? (
         <section className="yaml-editor-panel" aria-label="Scenario YAML editor">
           <div className="section-title-row">
-            <h2>Edit Active Scenario YAML</h2>
+            <h2>Edit Active Scenario YAML Config</h2>
             <button className="icon-button small" onClick={() => setYamlOpen(false)} aria-label="Close YAML editor">
               <X size={16} />
             </button>
@@ -150,16 +166,9 @@ export function App() {
 
       <Toolbar snapshot={topology.snapshot} filters={filters} paused={topology.paused} onFiltersChange={setFilters} onPausedChange={topology.setPaused} />
 
-      <section className="workspace">
+      <section className={selected ? "workspace has-detail" : "workspace"}>
         <TopologyGraph snapshot={topology.snapshot} filters={filters} selectedId={selected?.id} onSelect={setSelected} />
-        <RightPanel
-          snapshot={topology.snapshot}
-          scenarioConfig={topology.scenarioConfig}
-          selected={selected}
-          onSelect={setSelected}
-          onSaveBroker={(record) => void saveBroker(record)}
-          onRemoveBroker={(brokerId) => void removeBroker(brokerId)}
-        />
+        {selected ? <RightPanel snapshot={topology.snapshot} selected={selected} onSelect={setSelected} /> : null}
       </section>
     </main>
   );

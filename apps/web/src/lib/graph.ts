@@ -9,7 +9,7 @@ export interface StructuredLink {
   id: string;
   source: string;
   target: string;
-  kind: "emit" | "listen";
+  kind: "emit" | "listen" | "mesh";
   msgRate: number;
 }
 
@@ -133,6 +133,69 @@ export function relatedApplicationIds(snapshot: TopologySnapshot, selectedId: st
   return related;
 }
 
+function brokerMesh(snapshot: TopologySnapshot): Array<{ from: string; to: string }> {
+  return snapshot.edges
+    .filter((edge) => edge.type === "LINKED_TO" && edge.source.startsWith("broker:") && edge.target.startsWith("broker:"))
+    .map((edge) => ({ from: edge.source.replace(/^broker:/, ""), to: edge.target.replace(/^broker:/, "") }));
+}
+
+function shortestBrokerPath(mesh: Array<{ from: string; to: string }>, start: string, end: string): string[] {
+  if (start === end) {
+    return [start];
+  }
+  const adjacency = new Map<string, string[]>();
+  for (const link of mesh) {
+    adjacency.set(link.from, [...(adjacency.get(link.from) ?? []), link.to]);
+    adjacency.set(link.to, [...(adjacency.get(link.to) ?? []), link.from]);
+  }
+  const queue: string[][] = [[start]];
+  const visited = new Set([start]);
+  while (queue.length > 0) {
+    const path = queue.shift()!;
+    const current = path[path.length - 1];
+    if (!current) {
+      continue;
+    }
+    for (const next of adjacency.get(current) ?? []) {
+      if (visited.has(next)) {
+        continue;
+      }
+      const nextPath = [...path, next];
+      if (next === end) {
+        return nextPath;
+      }
+      visited.add(next);
+      queue.push(nextPath);
+    }
+  }
+  return [start, end];
+}
+
+export function relatedBrokerIds(snapshot: TopologySnapshot, selectedId: string | undefined): Set<string> {
+  if (!selectedId) {
+    return new Set();
+  }
+  const selected = nodeById(snapshot, selectedId);
+  if (!selected || selected.type !== "Application") {
+    return new Set(selectedId.startsWith("broker:") ? [selectedId.replace(/^broker:/, "")] : []);
+  }
+  const relatedApps = relatedApplicationIds(snapshot, selectedId);
+  const selectedBrokers = brokerIdsForApp(selected, snapshot.edges);
+  const oppositeBrokers = snapshot.nodes
+    .filter((node) => relatedApps.has(node.id) && node.id !== selectedId)
+    .flatMap((node) => brokerIdsForApp(node, snapshot.edges));
+  const mesh = brokerMesh(snapshot);
+  const brokers = new Set([...selectedBrokers, ...oppositeBrokers]);
+  for (const start of selectedBrokers) {
+    for (const end of oppositeBrokers) {
+      for (const brokerId of shortestBrokerPath(mesh, start, end)) {
+        brokers.add(brokerId);
+      }
+    }
+  }
+  return brokers;
+}
+
 export function buildStructuredTopology(snapshot: TopologySnapshot, filters: GraphFilters): StructuredTopology {
   const query = filters.search.trim().toLowerCase();
   const applicationNodes = snapshot.nodes.filter(isApplication).filter((node) => nodeMatchesSearch(node, query)).filter((node) => nodeMatchesProvenance(node, filters.provenances));
@@ -186,6 +249,23 @@ export function buildStructuredTopology(snapshot: TopologySnapshot, filters: Gra
         msgRate: listener.metrics?.msgRate ?? 0
       });
     }
+  }
+
+  for (const edge of snapshot.edges.filter((item) => item.type === "LINKED_TO" && item.source.startsWith("broker:") && item.target.startsWith("broker:"))) {
+    const sourceBrokerId = edge.source.replace(/^broker:/, "");
+    const targetBrokerId = edge.target.replace(/^broker:/, "");
+    if (!visibleBrokerIds.has(sourceBrokerId) || !visibleBrokerIds.has(targetBrokerId)) {
+      continue;
+    }
+    const sourceBroker = brokerNodes.find((broker) => broker.id === edge.source);
+    const targetBroker = brokerNodes.find((broker) => broker.id === edge.target);
+    links.push({
+      id: `mesh:${edge.source}->${edge.target}`,
+      source: edge.source,
+      target: edge.target,
+      kind: "mesh",
+      msgRate: ((sourceBroker?.metrics?.msgRate ?? 0) + (targetBroker?.metrics?.msgRate ?? 0)) / 2
+    });
   }
 
   return { emitters, brokers, listeners, links };

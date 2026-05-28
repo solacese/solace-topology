@@ -28,6 +28,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: #08111c;
+  font-size: 14px;
 }
 
 button,
@@ -143,8 +144,8 @@ button {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto auto 1fr;
-  gap: 14px;
-  padding: 18px;
+  gap: 12px;
+  padding: 14px;
 }
 
 .app-header {
@@ -170,7 +171,7 @@ button {
 }
 
 .app-title h1 {
-  font-size: clamp(1.28rem, 2.2vw, 2rem);
+  font-size: clamp(1.2rem, 1.8vw, 1.72rem);
   margin: 0 0 2px;
   letter-spacing: 0;
   white-space: nowrap;
@@ -312,8 +313,12 @@ button {
 .workspace {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
+}
+
+.workspace.has-detail {
+  grid-template-columns: minmax(0, 1fr) 340px;
 }
 
 .graph-shell,
@@ -376,6 +381,11 @@ button {
   stroke: var(--amber);
 }
 
+.map-link.mesh {
+  stroke: var(--blue);
+  opacity: 0.3;
+}
+
 .map-link.selected {
   opacity: 0.95;
   stroke: #ffffff;
@@ -391,8 +401,8 @@ button {
 
 .structured-map {
   display: grid;
-  grid-template-columns: minmax(230px, 1fr) minmax(230px, 0.82fr) minmax(230px, 1fr);
-  gap: clamp(28px, 5vw, 84px);
+  grid-template-columns: minmax(240px, 1fr) minmax(230px, 0.82fr) minmax(240px, 1fr);
+  gap: clamp(22px, 4vw, 68px);
 }
 
 .column-heading {
@@ -429,10 +439,10 @@ button {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  min-height: 58px;
-  padding: 10px;
+  min-height: 54px;
+  padding: 8px;
   border: 1px solid rgba(173, 209, 228, 0.16);
   border-radius: 8px;
   color: #eef6fb;
@@ -449,8 +459,23 @@ button {
 }
 
 .topology-node.broker {
-  min-height: 76px;
+  min-height: 66px;
   background: #07313d;
+}
+
+.topology-node.broker.edge {
+  border-color: rgba(0, 200, 149, 0.34);
+  background: #082820;
+}
+
+.topology-node.broker.cloud {
+  border-color: rgba(0, 165, 255, 0.38);
+  background: #062637;
+}
+
+.topology-node.broker.core {
+  border-color: rgba(255, 200, 87, 0.28);
+  background: #202414;
 }
 
 .topology-node.listener {
@@ -460,8 +485,8 @@ button {
 .node-icon {
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 8px;
   color: #06231b;
   background: var(--solace);
@@ -484,24 +509,25 @@ button {
 .node-content strong,
 .node-content span {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
 }
 
 .node-content strong {
-  font-size: 0.9rem;
+  font-size: 0.78rem;
+  line-height: 1.16;
 }
 
 .node-content span {
   margin-top: 2px;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.66rem;
+  line-height: 1.18;
 }
 
 .node-rate {
   color: #d8f7ef;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -520,6 +546,41 @@ button {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.035);
   padding: 12px;
+}
+
+.broker-settings-panel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: rgba(12, 24, 37, 0.96);
+  padding: 12px;
+}
+
+.broker-settings-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.broker-list {
+  display: grid;
+  gap: 7px;
+}
+
+.broker-settings-panel .broker-row {
+  margin-bottom: 0;
+}
+
+.broker-settings-panel .broker-editor {
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.broker-settings-panel .broker-editor-actions {
+  align-self: end;
 }
 
 .panel-section h2 {
@@ -853,12 +914,18 @@ button {
 }
 
 @media (max-width: 1120px) {
-  .workspace {
+  .workspace,
+  .workspace.has-detail {
     grid-template-columns: 1fr;
   }
 
   .right-panel {
     max-height: none;
+  }
+
+  .broker-settings-grid,
+  .broker-settings-panel .broker-editor {
+    grid-template-columns: 1fr;
   }
 }
 

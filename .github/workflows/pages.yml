@@ -25,6 +25,8 @@ jobs:
       - run: npm ci
       - run: npm run build:pages
       - name: Publish gh-pages branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd apps/web/dist
           touch .nojekyll

@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Activity, Database, RadioTower, Send, UsersRound } from "lucide-react";
 import { formatRate, type TopologyNode, type TopologySnapshot } from "@solace-topology/shared";
-import { buildStructuredTopology, relatedApplicationIds, type GraphFilters, type StructuredLink } from "../lib/graph.js";
+import { buildStructuredTopology, relatedApplicationIds, relatedBrokerIds, type GraphFilters, type StructuredLink } from "../lib/graph.js";
 
 interface TopologyGraphProps {
   snapshot: TopologySnapshot;
@@ -26,6 +26,28 @@ function roleLabel(role: string | undefined): string {
   return "Broker";
 }
 
+function brokerKind(node: TopologyNode): "edge" | "cloud" | "core" {
+  const tags = Array.isArray(node.metadata?.tags) ? node.metadata.tags.map(String) : [];
+  const text = `${tags.join(" ")} ${node.metadata?.site ?? ""} ${node.metadata?.physicalLocation ?? ""}`.toLowerCase();
+  if (text.includes("cloud")) {
+    return "cloud";
+  }
+  if (text.includes("edge") || text.includes("plant") || text.includes("field") || text.includes("store") || text.includes("branch")) {
+    return "edge";
+  }
+  return "core";
+}
+
+function brokerKindLabel(kind: "edge" | "cloud" | "core"): string {
+  if (kind === "cloud") {
+    return "Cloud broker";
+  }
+  if (kind === "edge") {
+    return "Edge broker";
+  }
+  return "Core broker";
+}
+
 function NodeCard({
   node,
   tone,
@@ -42,15 +64,16 @@ function NodeCard({
   const Icon = tone === "emitter" ? Send : tone === "listener" ? UsersRound : RadioTower;
   const provenance = String(node.metadata?.provenance ?? "");
   const location = tone === "broker" ? String(node.metadata?.physicalLocation ?? node.metadata?.site ?? "") : "";
+  const kind = tone === "broker" ? brokerKind(node) : "";
   return (
-    <button ref={setNodeRef(node.id)} className={`topology-node ${tone}${selected ? " selected" : ""}`} onClick={() => onSelect(node)}>
+    <button ref={setNodeRef(node.id)} className={`topology-node ${tone}${kind ? ` ${kind}` : ""}${selected ? " selected" : ""}`} onClick={() => onSelect(node)}>
       <span className="node-icon">
         <Icon size={17} />
       </span>
       <span className="node-content">
         <strong>{node.label}</strong>
         <span>
-          {location || `${roleLabel(String(node.metadata?.role ?? ""))}${provenance ? ` / ${provenance}` : ""}`}
+          {location ? `${brokerKindLabel(kind as "edge" | "cloud" | "core")} / ${location}` : `${roleLabel(String(node.metadata?.role ?? ""))}${provenance ? ` / ${provenance}` : ""}`}
         </span>
       </span>
       <span className="node-rate">{formatRate(node.metrics?.msgRate)}</span>
@@ -61,6 +84,7 @@ function NodeCard({
 export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: TopologyGraphProps) {
   const topology = useMemo(() => buildStructuredTopology(snapshot, filters), [filters, snapshot]);
   const relatedIds = useMemo(() => relatedApplicationIds(snapshot, selectedId), [selectedId, snapshot]);
+  const relatedBrokers = useMemo(() => relatedBrokerIds(snapshot, selectedId), [selectedId, snapshot]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const refs = useRef(new Map<string, HTMLButtonElement>());
   const [links, setLinks] = useState<RenderedLink[]>([]);
@@ -100,8 +124,15 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
         return [
           {
             ...link,
-            width: Math.min(1.5 + Math.sqrt(link.msgRate) * 0.08, 7),
-            selected: Boolean(selectedId && (link.source === selectedId || link.target === selectedId || relatedIds.has(link.source) || relatedIds.has(link.target))),
+            width: link.kind === "mesh" ? 2.2 : Math.min(1.5 + Math.sqrt(link.msgRate) * 0.08, 7),
+            selected: Boolean(
+              selectedId &&
+                (link.source === selectedId ||
+                  link.target === selectedId ||
+                  relatedIds.has(link.source) ||
+                  relatedIds.has(link.target) ||
+                  (link.kind === "mesh" && relatedBrokers.has(link.source.replace(/^broker:/, "")) && relatedBrokers.has(link.target.replace(/^broker:/, ""))))
+            ),
             path: `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`
           }
         ];
@@ -123,7 +154,7 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
       window.clearTimeout(timer);
       containerRef.current?.removeEventListener("scroll", drawLinks);
     };
-  }, [relatedIds, selectedId, topology]);
+  }, [relatedBrokers, relatedIds, selectedId, topology]);
 
   const maxY = Math.max(
     640,
