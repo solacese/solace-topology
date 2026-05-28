@@ -40,7 +40,7 @@ environment variable references or entered at runtime from the UI config editor.
 Each broker supports basic SEMP credentials or a SEMP API key, plus management
 URL, VPN, TLS verification, region, site, and physical location.
 
-The collector uses only read-only SEMP GET requests. It polls every 5 seconds
+The collector uses only read-only SEMP GET requests. It polls every 3 seconds
 by default and falls back to the sample topology if no broker can be reached.
 
 ## Project Structure

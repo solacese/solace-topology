@@ -8,8 +8,24 @@ function hash(input: string): number {
   return value;
 }
 
-function rate(seed: string, min: number, max: number): number {
+function baselineRate(seed: string, min: number, max: number): number {
   return min + (hash(seed) % (max - min));
+}
+
+function bucketRandom(seed: string, bucket: number): number {
+  let value = (hash(seed) + bucket * 2_654_435_761) >>> 0;
+  value ^= value << 13;
+  value ^= value >>> 17;
+  value ^= value << 5;
+  return (value >>> 0) / 4_294_967_295;
+}
+
+function jitteredRate(seed: string, min: number, max: number, now: number): number {
+  const baseline = baselineRate(seed, min, max);
+  const bucket = Math.floor(now / 3_000);
+  const normalized = bucketRandom(seed, bucket);
+  const multiplier = 0.78 + normalized * 0.44;
+  return Math.max(1, Math.round(Math.min(max, Math.max(min, baseline * multiplier))));
 }
 
 function addNode(nodes: Map<string, TopologyNode>, node: TopologyNode): void {
@@ -85,9 +101,10 @@ export function scenarioSummaries(config: TopologyConfigFile): { activeScenarioI
   };
 }
 
-export function buildStaticSnapshot(scenario: TopologyScenario): TopologySnapshot {
+export function buildStaticSnapshot(scenario: TopologyScenario, now = Date.now()): TopologySnapshot {
   const nodes = new Map<string, TopologyNode>();
   const edges: TopologySnapshot["edges"] = [];
+  const generatedAt = new Date(now).toISOString();
 
   for (const broker of scenario.brokers) {
     addNode(nodes, {
@@ -95,7 +112,7 @@ export function buildStaticSnapshot(scenario: TopologyScenario): TopologySnapsho
       type: "Broker",
       label: broker.displayName,
       status: "up",
-      metrics: { msgRate: rate(broker.id, 700, 4_500), healthScore: 100 },
+      metrics: { msgRate: jitteredRate(broker.id, 700, 4_500, now), healthScore: 100 },
       metadata: brokerMetadata(broker)
     });
   }
@@ -112,7 +129,7 @@ export function buildStaticSnapshot(scenario: TopologyScenario): TopologySnapsho
   }
 
   for (const app of scenario.applications) {
-    const appRate = Math.max(1, app.role === "listener" ? rate(app.id, 80, 900) : rate(app.id, 160, 2_400));
+    const appRate = Math.max(1, app.role === "listener" ? jitteredRate(app.id, 80, 900, now) : jitteredRate(app.id, 160, 2_400, now));
     const metrics: MetricBag = { msgRate: appRate, byteRate: appRate * 720 };
     const appId = `app:${app.id}`;
     addNode(nodes, {
@@ -162,7 +179,7 @@ export function buildStaticSnapshot(scenario: TopologyScenario): TopologySnapsho
   }
 
   return {
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     mode: "live",
     scenarioId: scenario.id,
     scenarioName: scenario.name,
@@ -175,7 +192,7 @@ export function buildStaticSnapshot(scenario: TopologyScenario): TopologySnapsho
       displayName: broker.displayName,
       status: "connected",
       mode: "live",
-      lastPollAt: new Date().toISOString()
+      lastPollAt: generatedAt
     })),
     summary: summary(scenario, [...nodes.values()], scenario)
   };

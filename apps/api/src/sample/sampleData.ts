@@ -9,10 +9,24 @@ function hash(input: string): number {
   return value;
 }
 
-function wave(seed: string, min: number, max: number, now = Date.now()): number {
-  const phase = hash(seed) / 10_000;
-  const normalized = (Math.sin(now / 12_000 + phase) + 1) / 2;
-  return Math.round(min + normalized * (max - min));
+function baselineValue(seed: string, min: number, max: number): number {
+  return min + (hash(seed) % (max - min + 1));
+}
+
+function bucketRandom(seed: string, bucket: number): number {
+  let value = (hash(seed) + bucket * 2_654_435_761) >>> 0;
+  value ^= value << 13;
+  value ^= value >>> 17;
+  value ^= value << 5;
+  return (value >>> 0) / 4_294_967_295;
+}
+
+function sampleValue(seed: string, min: number, max: number, now: number): number {
+  const baseline = baselineValue(seed, min, max);
+  const bucket = Math.floor(now / 3_000);
+  const normalized = bucketRandom(seed, bucket);
+  const multiplier = 0.78 + normalized * 0.44;
+  return Math.round(Math.min(max, Math.max(min, baseline * multiplier)));
 }
 
 function sampleClientName(appId: string, brokerId: string): string {
@@ -21,10 +35,11 @@ function sampleClientName(appId: string, brokerId: string): string {
 
 export function buildSampleObservations(brokersFile: BrokersFile, catalog: CatalogFile, brokerIds?: string[]): BrokerObservation[] {
   const selectedBrokerIds = new Set(brokerIds ?? brokersFile.brokers.map((broker) => broker.id));
-  return brokersFile.brokers.filter((broker) => selectedBrokerIds.has(broker.id)).map((broker) => buildSampleBrokerObservation(broker, catalog));
+  const now = Date.now();
+  return brokersFile.brokers.filter((broker) => selectedBrokerIds.has(broker.id)).map((broker) => buildSampleBrokerObservation(broker, catalog, now));
 }
 
-function buildSampleBrokerObservation(broker: BrokerConfig, catalog: CatalogFile): BrokerObservation {
+function buildSampleBrokerObservation(broker: BrokerConfig, catalog: CatalogFile, now: number): BrokerObservation {
   const vpnName = broker.messageVpns[0] ?? "default";
   const clients: ClientObservation[] = [];
   const queues: QueueObservation[] = [];
@@ -35,7 +50,7 @@ function buildSampleBrokerObservation(broker: BrokerConfig, catalog: CatalogFile
       continue;
     }
 
-    const appBaseRate = app.role === "listener" ? wave(app.id, 80, 650) : wave(app.id, 120, 1_900);
+    const appBaseRate = app.role === "listener" ? sampleValue(app.id, 80, 650, now) : sampleValue(app.id, 120, 1_900, now);
     clients.push({
       brokerId: broker.id,
       vpnName,
@@ -44,18 +59,18 @@ function buildSampleBrokerObservation(broker: BrokerConfig, catalog: CatalogFile
       connected: true,
       ingressMsgRate: app.role === "listener" ? 0 : appBaseRate,
       egressMsgRate: app.role === "emitter" ? 0 : Math.round(appBaseRate * 0.85),
-      ingressByteRate: app.role === "listener" ? 0 : appBaseRate * wave(`${app.id}-bytes`, 380, 1_200),
-      egressByteRate: app.role === "emitter" ? 0 : appBaseRate * wave(`${app.id}-bytes-egress`, 380, 1_200)
+      ingressByteRate: app.role === "listener" ? 0 : appBaseRate * sampleValue(`${app.id}-bytes`, 380, 1_200, now),
+      egressByteRate: app.role === "emitter" ? 0 : appBaseRate * sampleValue(`${app.id}-bytes-egress`, 380, 1_200, now)
     });
 
     for (const queueName of app.listen?.queues ?? []) {
-      const queueRate = wave(`${app.id}-${queueName}`, 80, 1_100);
+      const queueRate = sampleValue(`${app.id}-${queueName}`, 80, 1_100, now);
       queues.push({
         brokerId: broker.id,
         vpnName,
         name: queueName,
-        bindCount: wave(`${queueName}-binds`, 1, 4),
-        queuedMessages: wave(`${queueName}-queued`, 0, 220),
+        bindCount: sampleValue(`${queueName}-binds`, 1, 4, now),
+        queuedMessages: sampleValue(`${queueName}-queued`, 0, 220, now),
         ingressMsgRate: queueRate,
         egressMsgRate: Math.round(queueRate * 0.92),
         ingressByteRate: queueRate * 720,
@@ -83,7 +98,7 @@ function buildSampleBrokerObservation(broker: BrokerConfig, catalog: CatalogFile
       displayName: broker.displayName,
       status: "sample",
       mode: "sample",
-      lastPollAt: new Date().toISOString(),
+      lastPollAt: new Date(now).toISOString(),
       latencyMs: 0
     }
   };

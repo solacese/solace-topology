@@ -15,6 +15,7 @@ import {
 import { buildStaticSnapshot, scenarioSummaries } from "../lib/staticDemo.js";
 
 const staticMode = import.meta.env.VITE_STATIC_DEMO === "true";
+const demoUpdateIntervalMs = 3_000;
 
 export function useTopology() {
   const [staticConfig, setStaticConfig] = useState<TopologyConfigFile>();
@@ -189,6 +190,18 @@ export function useTopology() {
       cancelled = true;
     };
   }, [refreshScenarioConfig]);
+
+  useEffect(() => {
+    if (!staticMode || !scenarioConfig) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setSnapshot(buildStaticSnapshot(scenarioConfig));
+    }, demoUpdateIntervalMs);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [scenarioConfig]);
 
   useEffect(() => {
     eventSourceRef.current?.close();

@@ -41,7 +41,7 @@ function defaultRepoFile(pathFromRoot: string): string {
 export function loadRuntimeConfig(): RuntimeConfig {
   return {
     port: intFromEnv("PORT", 8080),
-    pollIntervalMs: intFromEnv("POLL_INTERVAL_MS", 5000),
+    pollIntervalMs: intFromEnv("POLL_INTERVAL_MS", 3000),
     topologyConfigPath: process.env.TOPOLOGY_CONFIG_PATH ?? defaultRepoFile("config/topology.yaml"),
     defaultScenarioId: process.env.DEFAULT_SCENARIO_ID,
     sampleFallbackEnabled: boolFromEnv("SAMPLE_FALLBACK_ENABLED", true),
