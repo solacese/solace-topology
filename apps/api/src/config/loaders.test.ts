@@ -32,20 +32,31 @@ describe("topology YAML loader", () => {
     expect(catalog.applications.filter((app) => app.role === "listener")).toHaveLength(5);
   });
 
-  it("keeps every publisher on one broker and every subscriber matched to a publisher", async () => {
+  it("keeps routes to one source broker, at most one broker hop, and one subscribed broker", async () => {
     const config = await loadTopologyConfig(path.resolve(process.cwd(), "../../config/topology.yaml"));
     for (const scenario of config.scenarios) {
       const publishers = scenario.applications.filter((app) => app.role === "emitter" || app.role === "both");
-      const publisherTopics = publishers.flatMap((app) => app.publishTopicPrefixes ?? []);
+      const directBrokerLinks = new Set(scenario.links.map((link) => `${link.from}->${link.to}`));
       expect(publishers.every((app) => app.brokerIds.length === 1), scenario.id).toBe(true);
 
       for (const subscriber of scenario.applications.filter((app) => app.role === "listener" || app.role === "both")) {
         const topics = subscriber.listen?.topicPrefixes ?? [];
+        expect(subscriber.brokerIds.length, `${scenario.id}:${subscriber.id}`).toBe(1);
         expect(topics.length, `${scenario.id}:${subscriber.id}`).toBeGreaterThan(0);
-        expect(
-          topics.some((topic) => publisherTopics.some((publisherTopic) => topicPatternsOverlap(publisherTopic, topic))),
-          `${scenario.id}:${subscriber.id}`
-        ).toBe(true);
+        const subscriberBroker = subscriber.brokerIds[0];
+
+        for (const topic of topics) {
+          const matchingPublishers = publishers.filter((publisher) => publisher.publishTopicPrefixes?.some((publisherTopic) => topicPatternsOverlap(publisherTopic, topic)));
+          expect(matchingPublishers.length, `${scenario.id}:${subscriber.id}:${topic}`).toBeGreaterThan(0);
+
+          for (const publisher of matchingPublishers) {
+            const publisherBroker = publisher.brokerIds[0];
+            expect(
+              publisherBroker === subscriberBroker || directBrokerLinks.has(`${publisherBroker}->${subscriberBroker}`),
+              `${scenario.id}:${publisher.id}->${subscriber.id}:${publisherBroker}->${subscriberBroker}`
+            ).toBe(true);
+          }
+        }
       }
     }
   });

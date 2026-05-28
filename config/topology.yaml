@@ -154,24 +154,15 @@ scenarios:
       - from: vehicle-iot-edge
         to: cloud-core
         kind: event-mesh
-      - from: cloud-core
-        to: analytics-cloud
-        kind: event-mesh
-      - from: analytics-cloud
-        to: data-products-cloud
-        kind: event-mesh
       - from: data-products-cloud
-        to: enterprise-hub
+        to: cloud-core
         kind: event-mesh
       - from: enterprise-hub
-        to: supplier-gateway
+        to: cloud-core
         kind: event-mesh
-      - from: plant-a-edge
-        to: plant-b-edge
-        kind: regional-backup
-      - from: plant-b-edge
-        to: plant-c-edge
-        kind: regional-backup
+      - from: supplier-gateway
+        to: cloud-core
+        kind: event-mesh
 
     owners:
       - id: connected-vehicle
@@ -365,7 +356,7 @@ scenarios:
         provenance: Data
         owner: data-platform
         costCenter: dp-400
-        brokerIds: [analytics-cloud]
+        brokerIds: [cloud-core]
         clientMatchers: ["mfg-analytics-*"]
         queueMatchers: ["Q.MFG.ANALYTICS"]
         listen:
@@ -378,7 +369,7 @@ scenarios:
         provenance: Data
         owner: data-platform
         costCenter: dp-400
-        brokerIds: [analytics-cloud]
+        brokerIds: [cloud-core]
         clientMatchers: ["digital-twin-*"]
         queueMatchers: ["Q.DIGITAL.TWIN"]
         listen:
@@ -391,7 +382,7 @@ scenarios:
         provenance: Enterprise
         owner: enterprise-apps
         costCenter: ep-300
-        brokerIds: [enterprise-hub]
+        brokerIds: [cloud-core]
         clientMatchers: ["aftersales-*"]
         queueMatchers: ["Q.AFTERSALES.HUB"]
         listen:
@@ -404,12 +395,12 @@ scenarios:
         provenance: Manufacturing
         owner: manufacturing-it
         costCenter: mf-200
-        brokerIds: [plant-a-edge, plant-b-edge, plant-c-edge]
+        brokerIds: [cloud-core]
         clientMatchers: ["plant-ops-control-*"]
         queueMatchers: ["Q.PLANT.OPERATIONS"]
         listen:
           queues: ["Q.PLANT.OPERATIONS"]
-          topicPrefixes: ["plant/>", "planning/>"]
+          topicPrefixes: ["plant/>", "planning/>", "supplier/>"]
 
       - id: connected-vehicle-command-listener
         displayName: Connected Vehicle Command Listener
@@ -772,12 +763,12 @@ scenarios:
         provenance: Data
         owner: risk-data
         costCenter: rd-300
-        brokerIds: [risk-cloud, payments-core]
+        brokerIds: [risk-cloud]
         clientMatchers: ["fraud-monitor-*"]
         queueMatchers: ["Q.FRAUD.MONITOR"]
         listen:
           queues: ["Q.FRAUD.MONITOR"]
-          topicPrefixes: ["payments/>", "customer/mobile/>", "atm/>"]
+          topicPrefixes: ["payments/>", "customer/mobile/>", "risk/fraud/>"]
       - id: ledger-posting-service
         displayName: Ledger Posting Service
         role: listener
@@ -801,7 +792,7 @@ scenarios:
         queueMatchers: ["Q.ATM.OPERATIONS"]
         listen:
           queues: ["Q.ATM.OPERATIONS"]
-          topicPrefixes: ["atm/>", "risk/fraud/score"]
+          topicPrefixes: ["atm/>"]
 
   - id: utilities
     name: Utilities Event Mesh
@@ -847,7 +838,7 @@ scenarios:
         tags: [cloud, analytics]
     links:
       - from: field-edge
-        to: grid-control
+        to: utility-cloud
         kind: event-mesh
       - from: grid-control
         to: utility-cloud
@@ -913,7 +904,7 @@ scenarios:
         provenance: Manufacturing
         owner: grid-ops
         costCenter: go-200
-        brokerIds: [grid-control, utility-cloud]
+        brokerIds: [utility-cloud]
         clientMatchers: ["grid-balancing-*"]
         queueMatchers: ["Q.GRID.BALANCING"]
         listen:

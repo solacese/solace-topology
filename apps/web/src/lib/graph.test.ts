@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TopologySnapshot } from "@solace-topology/shared";
-import { buildStructuredTopology } from "./graph.js";
+import { brokerRouteOffsets, buildStructuredTopology, relatedBrokerIds } from "./graph.js";
 
 const snapshot: TopologySnapshot = {
   generatedAt: new Date(0).toISOString(),
@@ -46,5 +46,35 @@ describe("structured topology", () => {
     expect(topology.emitters).toHaveLength(1);
     expect(topology.listeners).toHaveLength(0);
     expect(topology.brokers).toHaveLength(1);
+  });
+
+  it("does not invent intermediate broker hops for selected routes", () => {
+    const routeSnapshot: TopologySnapshot = {
+      ...snapshot,
+      nodes: [
+        { id: "broker:edge", type: "Broker", label: "Edge Broker" },
+        { id: "broker:cloud", type: "Broker", label: "Cloud Broker" },
+        { id: "broker:analytics", type: "Broker", label: "Analytics Broker" },
+        { id: "app:emit", type: "Application", label: "Vehicle Gateway", metadata: { role: "emitter", provenance: "IoT", brokerIds: ["edge"] }, metrics: { msgRate: 100 } },
+        { id: "app:listen", type: "Application", label: "Analytics", metadata: { role: "listener", provenance: "Data", brokerIds: ["analytics"] }, metrics: { msgRate: 50 } },
+        { id: "topic:vehicle/>", type: "TopicPattern", label: "vehicle/>" },
+        { id: "queue:analytics", type: "Queue", label: "Q.ANALYTICS" }
+      ],
+      edges: [
+        { id: "publish", type: "PUBLISHES_TO", source: "app:emit", target: "topic:vehicle/>" },
+        { id: "consume", type: "CONSUMES_FROM", source: "app:listen", target: "queue:analytics" },
+        { id: "subscribe", type: "SUBSCRIBES_TO", source: "queue:analytics", target: "topic:vehicle/>" },
+        { id: "edge-cloud", type: "LINKED_TO", source: "broker:edge", target: "broker:cloud" },
+        { id: "cloud-analytics", type: "LINKED_TO", source: "broker:cloud", target: "broker:analytics" }
+      ]
+    };
+
+    expect([...relatedBrokerIds(routeSnapshot, "app:emit")].sort()).toEqual(["analytics", "edge"]);
+    expect(brokerRouteOffsets(routeSnapshot, "app:emit")).toEqual(
+      new Map([
+        ["broker:edge", -26],
+        ["broker:analytics", 26]
+      ])
+    );
   });
 });

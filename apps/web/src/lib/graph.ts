@@ -133,44 +133,6 @@ export function relatedApplicationIds(snapshot: TopologySnapshot, selectedId: st
   return related;
 }
 
-function brokerMesh(snapshot: TopologySnapshot): Array<{ from: string; to: string }> {
-  return snapshot.edges
-    .filter((edge) => edge.type === "LINKED_TO" && edge.source.startsWith("broker:") && edge.target.startsWith("broker:"))
-    .map((edge) => ({ from: edge.source.replace(/^broker:/, ""), to: edge.target.replace(/^broker:/, "") }));
-}
-
-function shortestBrokerPath(mesh: Array<{ from: string; to: string }>, start: string, end: string): string[] {
-  if (start === end) {
-    return [start];
-  }
-  const adjacency = new Map<string, string[]>();
-  for (const link of mesh) {
-    adjacency.set(link.from, [...(adjacency.get(link.from) ?? []), link.to]);
-    adjacency.set(link.to, [...(adjacency.get(link.to) ?? []), link.from]);
-  }
-  const queue: string[][] = [[start]];
-  const visited = new Set([start]);
-  while (queue.length > 0) {
-    const path = queue.shift()!;
-    const current = path[path.length - 1];
-    if (!current) {
-      continue;
-    }
-    for (const next of adjacency.get(current) ?? []) {
-      if (visited.has(next)) {
-        continue;
-      }
-      const nextPath = [...path, next];
-      if (next === end) {
-        return nextPath;
-      }
-      visited.add(next);
-      queue.push(nextPath);
-    }
-  }
-  return [start, end];
-}
-
 export function relatedBrokerIds(snapshot: TopologySnapshot, selectedId: string | undefined): Set<string> {
   if (!selectedId) {
     return new Set();
@@ -184,16 +146,7 @@ export function relatedBrokerIds(snapshot: TopologySnapshot, selectedId: string 
   const oppositeBrokers = snapshot.nodes
     .filter((node) => relatedApps.has(node.id) && node.id !== selectedId)
     .flatMap((node) => brokerIdsForApp(node, snapshot.edges));
-  const mesh = brokerMesh(snapshot);
-  const brokers = new Set([...selectedBrokers, ...oppositeBrokers]);
-  for (const start of selectedBrokers) {
-    for (const end of oppositeBrokers) {
-      for (const brokerId of shortestBrokerPath(mesh, start, end)) {
-        brokers.add(brokerId);
-      }
-    }
-  }
-  return brokers;
+  return new Set([...selectedBrokers, ...oppositeBrokers]);
 }
 
 export function activeRouteNodeIds(snapshot: TopologySnapshot, selectedId: string | undefined): Set<string> {
@@ -212,6 +165,12 @@ export function activeRouteNodeIds(snapshot: TopologySnapshot, selectedId: strin
         active.add(app.id);
       }
     }
+    for (const route of publisherSubscriberRoutes(snapshot).filter((route) => route.from === brokerId || route.to === brokerId)) {
+      active.add(route.publisherId);
+      active.add(route.subscriberId);
+      active.add(`broker:${route.from}`);
+      active.add(`broker:${route.to}`);
+    }
     return active;
   }
   if (selected.type === "Application") {
@@ -227,8 +186,8 @@ export function activeRouteNodeIds(snapshot: TopologySnapshot, selectedId: strin
   return new Set([selected.id]);
 }
 
-function publisherSubscriberBrokerPairs(snapshot: TopologySnapshot): Array<{ from: string; to: string }> {
-  const pairs: Array<{ from: string; to: string }> = [];
+function publisherSubscriberRoutes(snapshot: TopologySnapshot): Array<{ publisherId: string; subscriberId: string; from: string; to: string }> {
+  const routes: Array<{ publisherId: string; subscriberId: string; from: string; to: string }> = [];
   const emitters = snapshot.nodes.filter((node) => node.type === "Application" && ["emitter", "both"].includes(roleOf(node)));
   const listeners = snapshot.nodes.filter((node) => node.type === "Application" && ["listener", "both"].includes(roleOf(node)));
 
@@ -242,13 +201,13 @@ function publisherSubscriberBrokerPairs(snapshot: TopologySnapshot): Array<{ fro
       }
       for (const from of sourceBrokers) {
         for (const to of brokerIdsForApp(listener, snapshot.edges)) {
-          pairs.push({ from, to });
+          routes.push({ publisherId: emitter.id, subscriberId: listener.id, from, to });
         }
       }
     }
   }
 
-  return pairs;
+  return routes;
 }
 
 export function brokerRouteOffsets(snapshot: TopologySnapshot, selectedId: string | undefined): Map<string, number> {
@@ -260,44 +219,26 @@ export function brokerRouteOffsets(snapshot: TopologySnapshot, selectedId: strin
     return new Map();
   }
 
-  const mesh = brokerMesh(snapshot);
   let pairs: Array<{ from: string; to: string }> = [];
+  const routes = publisherSubscriberRoutes(snapshot);
 
   if (selected.type === "Application") {
-    const relatedApps = relatedApplicationIds(snapshot, selectedId);
-    const role = roleOf(selected);
-    if (role === "emitter" || role === "both") {
-      const sources = brokerIdsForApp(selected, snapshot.edges);
-      const targets = snapshot.nodes
-        .filter((node) => relatedApps.has(node.id) && node.id !== selectedId && ["listener", "both"].includes(roleOf(node)))
-        .flatMap((node) => brokerIdsForApp(node, snapshot.edges));
-      pairs = sources.flatMap((from) => targets.map((to) => ({ from, to })));
-    }
-    if (role === "listener" || role === "both") {
-      const targets = brokerIdsForApp(selected, snapshot.edges);
-      const sources = snapshot.nodes
-        .filter((node) => relatedApps.has(node.id) && node.id !== selectedId && ["emitter", "both"].includes(roleOf(node)))
-        .flatMap((node) => brokerIdsForApp(node, snapshot.edges));
-      pairs = sources.flatMap((from) => targets.map((to) => ({ from, to })));
-    }
+    pairs = routes.filter((route) => route.publisherId === selectedId || route.subscriberId === selectedId).map((route) => ({ from: route.from, to: route.to }));
   }
 
   if (selected.type === "Broker") {
     const brokerId = selected.id.replace(/^broker:/, "");
-    pairs = publisherSubscriberBrokerPairs(snapshot).filter((pair) => shortestBrokerPath(mesh, pair.from, pair.to).includes(brokerId));
+    pairs = routes.filter((route) => route.from === brokerId || route.to === brokerId).map((route) => ({ from: route.from, to: route.to }));
   }
 
   const positions = new Map<string, number[]>();
   for (const pair of pairs) {
-    const path = shortestBrokerPath(mesh, pair.from, pair.to);
-    if (path.length <= 1) {
+    if (pair.from === pair.to) {
       positions.set(pair.from, [...(positions.get(pair.from) ?? []), 0]);
       continue;
     }
-    path.forEach((brokerId, index) => {
-      const normalized = -1 + (index / (path.length - 1)) * 2;
-      positions.set(brokerId, [...(positions.get(brokerId) ?? []), normalized]);
-    });
+    positions.set(pair.from, [...(positions.get(pair.from) ?? []), -1]);
+    positions.set(pair.to, [...(positions.get(pair.to) ?? []), 1]);
   }
 
   const offsets = new Map<string, number>();
