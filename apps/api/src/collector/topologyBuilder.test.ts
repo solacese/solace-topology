@@ -18,5 +18,28 @@ describe("topology builder", () => {
     expect(snapshot.summary.emittingApplicationCount).toBe(15);
     expect(snapshot.summary.listeningApplicationCount).toBe(5);
     expect(snapshot.edges.some((edge) => edge.type === "PUBLISHES_TO" && edge.confidence === "declared+observed")).toBe(true);
+
+    const msgRate = (nodeId: string) => snapshot.nodes.find((node) => node.id === nodeId)?.metrics?.msgRate ?? 0;
+    const digitalTwinSources = [
+      "app:vehicle-telemetry-gateway",
+      "app:battery-health-collector",
+      "app:connected-vehicle-api",
+      "app:paint-shop-sensors",
+      "app:body-shop-robots",
+      "app:assembly-line-plc",
+      "app:quality-vision-inspection",
+      "app:logistics-yard-scanner",
+      "app:operational-data-publisher"
+    ];
+    const subscriberIds = [
+      "app:manufacturing-analytics",
+      "app:digital-twin-platform",
+      "app:aftersales-data-hub",
+      "app:plant-operations-control",
+      "app:connected-vehicle-command-listener"
+    ];
+
+    expect(msgRate("app:digital-twin-platform")).toBe(digitalTwinSources.reduce((sum, nodeId) => sum + msgRate(nodeId), 0));
+    expect(msgRate("broker:cloud-core")).toBe(subscriberIds.reduce((sum, nodeId) => sum + msgRate(nodeId), 0));
   });
 });

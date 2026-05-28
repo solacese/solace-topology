@@ -44,6 +44,10 @@ function rate(snapshot: TopologySnapshot, nodeId: string): number {
   return snapshot.nodes.find((node) => node.id === nodeId)?.metrics?.msgRate ?? 0;
 }
 
+function edgeRate(snapshot: TopologySnapshot, edgeIdPrefix: string): number {
+  return snapshot.edges.find((edge) => edge.id.startsWith(edgeIdPrefix))?.metrics?.msgRate ?? 0;
+}
+
 describe("static demo snapshot", () => {
   it("keeps throughput stable inside a bucket and changes it every 3 seconds", () => {
     const first = buildStaticSnapshot(scenario, 0);
@@ -53,5 +57,44 @@ describe("static demo snapshot", () => {
     expect(rate(first, "app:publisher-a")).toBeGreaterThan(0);
     expect(rate(first, "app:publisher-a")).toBe(rate(sameBucket, "app:publisher-a"));
     expect(rate(nextBucket, "app:publisher-a")).not.toBe(rate(first, "app:publisher-a"));
+  });
+
+  it("derives subscriber, broker, and mesh throughput from publisher rates", () => {
+    const flowScenario: TopologyScenario = {
+      ...scenario,
+      brokers: [
+        scenario.brokers[0]!,
+        {
+          ...scenario.brokers[0]!,
+          id: "cloud",
+          displayName: "Cloud Broker",
+          tags: ["cloud"]
+        }
+      ],
+      links: [{ from: "edge", to: "cloud", kind: "event-mesh" }],
+      applications: [
+        scenario.applications[0]!,
+        {
+          id: "subscriber-a",
+          displayName: "Subscriber A",
+          role: "listener",
+          provenance: "Data",
+          owner: "ops",
+          costCenter: "iot",
+          brokerIds: ["cloud"],
+          listen: {
+            queues: ["Q.SUBSCRIBER.A"],
+            topicPrefixes: ["data/>"]
+          }
+        }
+      ]
+    };
+    const snapshot = buildStaticSnapshot(flowScenario, 0);
+    const publisherRate = rate(snapshot, "app:publisher-a");
+
+    expect(rate(snapshot, "app:subscriber-a")).toBe(publisherRate);
+    expect(rate(snapshot, "broker:edge")).toBe(publisherRate);
+    expect(rate(snapshot, "broker:cloud")).toBe(publisherRate);
+    expect(edgeRate(snapshot, "LINKED_TO:broker:edge->broker:cloud")).toBe(publisherRate);
   });
 });

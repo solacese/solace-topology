@@ -186,14 +186,15 @@ export function activeRouteNodeIds(snapshot: TopologySnapshot, selectedId: strin
   return new Set([selected.id]);
 }
 
-function publisherSubscriberRoutes(snapshot: TopologySnapshot): Array<{ publisherId: string; subscriberId: string; from: string; to: string }> {
-  const routes: Array<{ publisherId: string; subscriberId: string; from: string; to: string }> = [];
+function publisherSubscriberRoutes(snapshot: TopologySnapshot): Array<{ publisherId: string; subscriberId: string; from: string; to: string; msgRate: number }> {
+  const routes: Array<{ publisherId: string; subscriberId: string; from: string; to: string; msgRate: number }> = [];
   const emitters = snapshot.nodes.filter((node) => node.type === "Application" && ["emitter", "both"].includes(roleOf(node)));
   const listeners = snapshot.nodes.filter((node) => node.type === "Application" && ["listener", "both"].includes(roleOf(node)));
 
   for (const emitter of emitters) {
     const sourceTopics = publishedTopics(snapshot, emitter.id);
     const sourceBrokers = brokerIdsForApp(emitter, snapshot.edges);
+    const msgRate = emitter.metrics?.msgRate ?? 0;
     for (const listener of listeners) {
       const targetTopics = listenerTopics(snapshot, listener.id);
       if (!sourceTopics.some((sourceTopic) => targetTopics.some((targetTopic) => topicPatternsOverlap(sourceTopic, targetTopic)))) {
@@ -201,13 +202,31 @@ function publisherSubscriberRoutes(snapshot: TopologySnapshot): Array<{ publishe
       }
       for (const from of sourceBrokers) {
         for (const to of brokerIdsForApp(listener, snapshot.edges)) {
-          routes.push({ publisherId: emitter.id, subscriberId: listener.id, from, to });
+          routes.push({ publisherId: emitter.id, subscriberId: listener.id, from, to, msgRate });
         }
       }
     }
   }
 
   return routes;
+}
+
+function meshRatesByBrokerPair(snapshot: TopologySnapshot): Map<string, number> {
+  const rates = new Map<string, number>();
+  const seenForwardedPublishers = new Set<string>();
+  for (const route of publisherSubscriberRoutes(snapshot)) {
+    if (route.from === route.to) {
+      continue;
+    }
+    const seenKey = `${route.publisherId}:${route.from}->${route.to}`;
+    if (seenForwardedPublishers.has(seenKey)) {
+      continue;
+    }
+    seenForwardedPublishers.add(seenKey);
+    const linkKey = `${route.from}->${route.to}`;
+    rates.set(linkKey, (rates.get(linkKey) ?? 0) + route.msgRate);
+  }
+  return rates;
 }
 
 export function brokerRouteOffsets(snapshot: TopologySnapshot, selectedId: string | undefined): Map<string, number> {
@@ -273,6 +292,7 @@ export function buildStructuredTopology(snapshot: TopologySnapshot, filters: Gra
     })
   );
   const visibleBrokerIds = new Set(brokers.map((broker) => broker.id.replace(/^broker:/, "")));
+  const meshRates = meshRatesByBrokerPair(snapshot);
 
   const links: StructuredLink[] = [];
   for (const emitter of emitters) {
@@ -310,14 +330,13 @@ export function buildStructuredTopology(snapshot: TopologySnapshot, filters: Gra
     if (!visibleBrokerIds.has(sourceBrokerId) || !visibleBrokerIds.has(targetBrokerId)) {
       continue;
     }
-    const sourceBroker = brokerNodes.find((broker) => broker.id === edge.source);
-    const targetBroker = brokerNodes.find((broker) => broker.id === edge.target);
+    const msgRate = meshRates.get(`${sourceBrokerId}->${targetBrokerId}`) ?? meshRates.get(`${targetBrokerId}->${sourceBrokerId}`) ?? edge.metrics?.msgRate ?? 0;
     links.push({
       id: `mesh:${edge.source}->${edge.target}`,
       source: edge.source,
       target: edge.target,
       kind: "mesh",
-      msgRate: ((sourceBroker?.metrics?.msgRate ?? 0) + (targetBroker?.metrics?.msgRate ?? 0)) / 2
+      msgRate
     });
   }
 
