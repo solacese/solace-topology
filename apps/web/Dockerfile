@@ -19,4 +19,4 @@ WORKDIR /workspace
 RUN npm install -g vite@6.3.5
 COPY --from=build /workspace/apps/web/dist apps/web/dist
 EXPOSE 3000
-CMD ["vite", "preview", "apps/web/dist", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["vite", "preview", "--host", "0.0.0.0", "--port", "3000", "--outDir", "apps/web/dist"]

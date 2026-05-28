@@ -134,12 +134,38 @@ export function App() {
       {yamlOpen ? (
         <section className="yaml-editor-panel" aria-label="Scenario YAML editor">
           <div className="section-title-row">
-            <h2>Edit Active Scenario YAML Config</h2>
+            <div>
+              <h2>Edit Active Scenario YAML Config</h2>
+              <p>Swap scenarios, broker connection fields, publishers, subscribers, subscriptions, and locations in one file.</p>
+            </div>
             <button className="icon-button small" onClick={() => setYamlOpen(false)} aria-label="Close YAML editor">
               <X size={16} />
             </button>
           </div>
-          <textarea value={yamlDraft} onChange={(event) => setYamlDraft(event.target.value)} spellCheck={false} />
+          <div className="yaml-editor-grid">
+            <textarea value={yamlDraft} onChange={(event) => setYamlDraft(event.target.value)} spellCheck={false} />
+            <aside className="yaml-assist" aria-label="YAML editing guide">
+              <h3>Editing Guide</h3>
+              <dl>
+                <div>
+                  <dt>Broker</dt>
+                  <dd>Set `managementUrl`, `messageVpns`, location, and auth mode.</dd>
+                </div>
+                <div>
+                  <dt>Publisher</dt>
+                  <dd>Use role `emitter`, one `brokerIds` value, and publish topic prefixes.</dd>
+                </div>
+                <div>
+                  <dt>Subscriber</dt>
+                  <dd>Use role `listener`, queues, and topic prefixes that match publishers.</dd>
+                </div>
+                <div>
+                  <dt>Security</dt>
+                  <dd>Use `usernameEnv`, `passwordEnv`, or `sempApiKeyEnv` for production.</dd>
+                </div>
+              </dl>
+            </aside>
+          </div>
           {yamlError ? <div className="form-error">{yamlError}</div> : null}
           <div className="yaml-actions">
             <button onClick={() => void saveYamlEditor()}>

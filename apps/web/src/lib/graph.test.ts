@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { TopologySnapshot } from "@solace-topology/shared";
 import { brokerRouteOffsets, buildStructuredTopology, relatedBrokerIds } from "./graph.js";
+import { brokerFlowOrderForTest } from "../components/TopologyGraph.js";
 
 const snapshot: TopologySnapshot = {
   generatedAt: new Date(0).toISOString(),
@@ -100,5 +101,30 @@ describe("structured topology", () => {
     const topology = buildStructuredTopology(routeSnapshot, { search: "", provenances: new Set() });
 
     expect(topology.links.find((link) => link.kind === "mesh")?.msgRate).toBe(125);
+  });
+
+  it("orders upstream brokers below downstream brokers in type sort", () => {
+    const routeSnapshot: TopologySnapshot = {
+      ...snapshot,
+      nodes: [
+        { id: "broker:edge", type: "Broker", label: "Edge Broker", metadata: { tags: ["edge"] } },
+        { id: "broker:cloud", type: "Broker", label: "Cloud Broker", metadata: { tags: ["cloud"] } },
+        { id: "app:emit", type: "Application", label: "Vehicle Gateway", metadata: { role: "emitter", provenance: "IoT", brokerIds: ["edge"] }, metrics: { msgRate: 125 } },
+        { id: "app:listen", type: "Application", label: "Analytics", metadata: { role: "listener", provenance: "Data", brokerIds: ["cloud"] }, metrics: { msgRate: 125 } },
+        { id: "topic:vehicle/>", type: "TopicPattern", label: "vehicle/>" },
+        { id: "queue:analytics", type: "Queue", label: "Q.ANALYTICS" }
+      ],
+      edges: [
+        { id: "publish", type: "PUBLISHES_TO", source: "app:emit", target: "topic:vehicle/>" },
+        { id: "consume", type: "CONSUMES_FROM", source: "app:listen", target: "queue:analytics" },
+        { id: "subscribe", type: "SUBSCRIBES_TO", source: "queue:analytics", target: "topic:vehicle/>" },
+        { id: "edge-cloud", type: "LINKED_TO", source: "broker:edge", target: "broker:cloud" }
+      ]
+    };
+
+    const topology = buildStructuredTopology(routeSnapshot, { search: "", provenances: new Set() });
+
+    expect(brokerFlowOrderForTest(topology)).toEqual(["broker:cloud", "broker:edge"]);
+    expect(brokerFlowOrderForTest(topology, "name")).toEqual(["broker:cloud", "broker:edge"]);
   });
 });

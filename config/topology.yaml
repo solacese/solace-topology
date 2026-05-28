@@ -697,7 +697,7 @@ scenarios:
         tags: [risk, analytics]
     links:
       - from: branch-edge
-        to: payments-core
+        to: risk-cloud
         kind: event-mesh
       - from: payments-core
         to: risk-cloud

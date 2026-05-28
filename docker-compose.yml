@@ -12,7 +12,7 @@ services:
       - neo4j-data:/data
       - neo4j-logs:/logs
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p solace-topology 'RETURN 1' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
@@ -28,7 +28,8 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       TOPOLOGY_CONFIG_PATH: /workspace/config/topology.yaml
       NEO4J_URI: bolt://neo4j:7687

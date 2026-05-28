@@ -22,7 +22,6 @@ Open the web app at <http://localhost:5173>. The API runs on
 ## Docker Compose
 
 ```bash
-cp .env.example .env
 docker compose up --build
 ```
 
@@ -32,13 +31,38 @@ Services:
 - API: <http://localhost:8080>
 - Neo4j Browser: <http://localhost:7474>
 
+The `.env` file is optional. Create one from `.env.example` when you want to
+override ports, Neo4j settings, polling interval, or production broker
+credentials.
+
+## Live Local Broker Smoke
+
+To validate real SEMP and MQTT behavior locally, run five PubSub+ Standard
+brokers with publisher/subscriber traffic:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.live-test.yml up --build
+npm run test:live-brokers
+```
+
+The live fixture config is `config/live-docker.yaml`. It creates five local
+brokers, five MQTT publisher clients, five MQTT subscriber clients, queues, and
+subscriptions, then verifies the API collector reports `live` mode with
+non-zero publisher, broker, and subscriber rates.
+
+Stop the fixture with:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.live-test.yml down
+```
+
 ## Real Broker Setup
 
-Edit `config/topology.yaml` to change scenarios, brokers, applications,
-subscriptions, and ownership metadata. Broker credentials can be supplied as
-environment variable references or entered at runtime from the UI config editor.
-Each broker supports basic SEMP credentials or a SEMP API key, plus management
-URL, VPN, TLS verification, region, site, and physical location.
+Use **Broker Settings** in the top-right of the app for guided broker setup:
+management URL, VPN, physical location, basic credentials, or SEMP API key.
+Use **YAML Config** for bulk edits to scenarios, publishers, subscribers,
+subscriptions, links, ownership, and locations. Broker credentials can be
+supplied as environment variable references for production deployments.
 
 The collector uses only read-only SEMP GET requests. It polls every 3 seconds
 by default and falls back to the sample topology if no broker can be reached.

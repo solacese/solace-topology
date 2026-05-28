@@ -14,6 +14,7 @@
     "build": "npm run build -w @solace-topology/shared && npm run build -w @solace-topology/api && npm run build -w @solace-topology/web",
     "build:pages": "node scripts/prepare-pages-demo.mjs && VITE_STATIC_DEMO=true VITE_BASE_PATH=/solace-topology/ npm run build -w @solace-topology/shared && VITE_STATIC_DEMO=true VITE_BASE_PATH=/solace-topology/ npm run build -w @solace-topology/web",
     "test": "npm run build -w @solace-topology/shared && npm run test -w @solace-topology/shared && npm run test -w @solace-topology/api && npm run test -w @solace-topology/web",
+    "test:live-brokers": "npm run build -w @solace-topology/shared && npm run build -w @solace-topology/api && node scripts/live-broker-smoke.mjs",
     "typecheck": "npm run build -w @solace-topology/shared && npm run typecheck -w @solace-topology/api && npm run typecheck -w @solace-topology/web"
   },
   "devDependencies": {
@@ -21,5 +22,8 @@
     "concurrently": "^9.1.2",
     "typescript": "^5.8.3",
     "vitest": "^3.1.4"
+  },
+  "dependencies": {
+    "mqtt": "^5.15.1"
   }
 }

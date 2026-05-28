@@ -97,4 +97,31 @@ describe("static demo snapshot", () => {
     expect(rate(snapshot, "broker:cloud")).toBe(publisherRate);
     expect(edgeRate(snapshot, "LINKED_TO:broker:edge->broker:cloud")).toBe(publisherRate);
   });
+
+  it("does not double count a broker when publisher and subscriber are on the same broker", () => {
+    const localScenario: TopologyScenario = {
+      ...scenario,
+      applications: [
+        scenario.applications[0]!,
+        {
+          id: "subscriber-a",
+          displayName: "Subscriber A",
+          role: "listener",
+          provenance: "Data",
+          owner: "ops",
+          costCenter: "iot",
+          brokerIds: ["edge"],
+          listen: {
+            queues: ["Q.SUBSCRIBER.A"],
+            topicPrefixes: ["data/>"]
+          }
+        }
+      ]
+    };
+    const snapshot = buildStaticSnapshot(localScenario, 0);
+    const publisherRate = rate(snapshot, "app:publisher-a");
+
+    expect(rate(snapshot, "app:subscriber-a")).toBe(publisherRate);
+    expect(rate(snapshot, "broker:edge")).toBe(publisherRate);
+  });
 });

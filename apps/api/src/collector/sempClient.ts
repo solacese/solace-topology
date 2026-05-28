@@ -170,12 +170,12 @@ export class SempClient {
       brokerId,
       vpnName,
       name: stringFrom(raw, ["clientName", "name"], "unknown-client"),
-      username: stringFrom(raw, ["username", "userName"], undefined),
+      username: stringFrom(raw, ["clientUsername", "originalClientUsername", "username", "userName"], undefined),
       connected: boolFrom(raw, ["isConnected", "connected", "enabled"], true),
-      ingressMsgRate: numberFrom(raw, ["clientDataMessagesReceivedRate", "dataMessagesReceivedRate", "rxMsgRate", "ingressMsgRate"]),
-      egressMsgRate: numberFrom(raw, ["clientDataMessagesSentRate", "dataMessagesSentRate", "txMsgRate", "egressMsgRate"]),
-      ingressByteRate: numberFrom(raw, ["clientDataBytesReceivedRate", "dataBytesReceivedRate", "rxByteRate", "ingressByteRate"]),
-      egressByteRate: numberFrom(raw, ["clientDataBytesSentRate", "dataBytesSentRate", "txByteRate", "egressByteRate"])
+      ingressMsgRate: numberFrom(raw, ["clientDataMessagesReceivedRate", "dataMessagesReceivedRate", "rxMsgRate", "averageRxMsgRate", "ingressMsgRate"]),
+      egressMsgRate: numberFrom(raw, ["clientDataMessagesSentRate", "dataMessagesSentRate", "txMsgRate", "averageTxMsgRate", "egressMsgRate"]),
+      ingressByteRate: numberFrom(raw, ["clientDataBytesReceivedRate", "dataBytesReceivedRate", "rxByteRate", "averageRxByteRate", "ingressByteRate"]),
+      egressByteRate: numberFrom(raw, ["clientDataBytesSentRate", "dataBytesSentRate", "txByteRate", "averageTxByteRate", "egressByteRate"])
     };
   }
 

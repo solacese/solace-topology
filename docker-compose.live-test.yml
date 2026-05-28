@@ -1,0 +1,87 @@
+x-solace-broker: &solace-broker
+  image: solace/solace-pubsub-standard:${SOLACE_IMAGE_TAG:-latest}
+  shm_size: 1g
+  environment:
+    username_admin_globalaccesslevel: admin
+    username_admin_password: admin
+    system_scaling_maxconnectioncount: 100
+
+services:
+  broker-1:
+    <<: *solace-broker
+    container_name: solace-topology-live-broker-1
+    ports:
+      - "19080:8080"
+      - "11883:1883"
+
+  broker-2:
+    <<: *solace-broker
+    container_name: solace-topology-live-broker-2
+    ports:
+      - "29080:8080"
+      - "21883:1883"
+
+  broker-3:
+    <<: *solace-broker
+    container_name: solace-topology-live-broker-3
+    ports:
+      - "39080:8080"
+      - "31883:1883"
+
+  broker-4:
+    <<: *solace-broker
+    container_name: solace-topology-live-broker-4
+    ports:
+      - "49080:8080"
+      - "41883:1883"
+
+  broker-5:
+    <<: *solace-broker
+    container_name: solace-topology-live-broker-5
+    ports:
+      - "59080:8080"
+      - "51883:1883"
+
+  api:
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+      - broker-5
+    environment:
+      TOPOLOGY_CONFIG_PATH: /workspace/config/live-docker.yaml
+      DEFAULT_SCENARIO_ID: live-docker
+      SAMPLE_FALLBACK_ENABLED: "false"
+      SEMP_USER_LIVE: admin
+      SEMP_PASSWORD_LIVE: admin
+      LIVE_BROKER_1_URL: http://broker-1:8080
+      LIVE_BROKER_2_URL: http://broker-2:8080
+      LIVE_BROKER_3_URL: http://broker-3:8080
+      LIVE_BROKER_4_URL: http://broker-4:8080
+      LIVE_BROKER_5_URL: http://broker-5:8080
+
+  traffic:
+    build:
+      context: .
+      dockerfile: scripts/live-broker-traffic.Dockerfile
+    container_name: solace-topology-live-traffic
+    depends_on:
+      - broker-1
+      - broker-2
+      - broker-3
+      - broker-4
+      - broker-5
+    environment:
+      SEMP_USER_LIVE: admin
+      SEMP_PASSWORD_LIVE: admin
+      LIVE_BROKER_1_URL: http://broker-1:8080
+      LIVE_BROKER_2_URL: http://broker-2:8080
+      LIVE_BROKER_3_URL: http://broker-3:8080
+      LIVE_BROKER_4_URL: http://broker-4:8080
+      LIVE_BROKER_5_URL: http://broker-5:8080
+      LIVE_BROKER_1_MQTT_URL: mqtt://broker-1:1883
+      LIVE_BROKER_2_MQTT_URL: mqtt://broker-2:1883
+      LIVE_BROKER_3_MQTT_URL: mqtt://broker-3:1883
+      LIVE_BROKER_4_MQTT_URL: mqtt://broker-4:1883
+      LIVE_BROKER_5_MQTT_URL: mqtt://broker-5:1883

@@ -107,21 +107,27 @@ function buildRateModel(scenario: TopologyScenario, now: number): { appMetrics: 
     appMetrics.set(app.id, metricsFor(publisherMsgRate + subscriberMsgRate));
   }
 
-  const brokerMsgRates = new Map(scenario.brokers.map((broker) => [broker.id, 0]));
+  const brokerIngressRates = new Map(scenario.brokers.map((broker) => [broker.id, 0]));
+  const brokerEgressRates = new Map(scenario.brokers.map((broker) => [broker.id, 0]));
   for (const app of scenario.applications.filter(roleCanPublish)) {
     const brokerId = app.brokerIds[0];
     if (brokerId) {
-      brokerMsgRates.set(brokerId, (brokerMsgRates.get(brokerId) ?? 0) + (publisherRates.get(app.id) ?? 0));
+      brokerIngressRates.set(brokerId, (brokerIngressRates.get(brokerId) ?? 0) + (publisherRates.get(app.id) ?? 0));
     }
   }
   for (const app of scenario.applications.filter(roleCanSubscribe)) {
     const brokerId = app.brokerIds[0];
     if (brokerId) {
-      brokerMsgRates.set(brokerId, (brokerMsgRates.get(brokerId) ?? 0) + (appMetrics.get(app.id)?.msgRate ?? 0));
+      brokerEgressRates.set(brokerId, (brokerEgressRates.get(brokerId) ?? 0) + (appMetrics.get(app.id)?.msgRate ?? 0));
     }
   }
 
-  const brokerMetrics = new Map([...brokerMsgRates].map(([brokerId, msgRate]) => [brokerId, { ...metricsFor(msgRate), healthScore: 100 }]));
+  const brokerMetrics = new Map(
+    scenario.brokers.map((broker) => {
+      const msgRate = Math.max(brokerIngressRates.get(broker.id) ?? 0, brokerEgressRates.get(broker.id) ?? 0);
+      return [broker.id, { ...metricsFor(msgRate), healthScore: 100 }];
+    })
+  );
   const linkMsgRates = new Map<string, number>();
   const seenForwardedPublishers = new Set<string>();
   for (const flow of flows) {

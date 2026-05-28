@@ -1,5 +1,7 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import type { BrokersFile, CatalogFile } from "@solace-topology/shared";
+import type { BrokerObservation } from "./types.js";
 import { loadTopologyConfig, scenarioToFiles } from "../config/loaders.js";
 import { buildSampleObservations } from "../sample/sampleData.js";
 import { buildTopologySnapshot } from "./topologyBuilder.js";
@@ -41,5 +43,65 @@ describe("topology builder", () => {
 
     expect(msgRate("app:digital-twin-platform")).toBe(digitalTwinSources.reduce((sum, nodeId) => sum + msgRate(nodeId), 0));
     expect(msgRate("broker:cloud-core")).toBe(subscriberIds.reduce((sum, nodeId) => sum + msgRate(nodeId), 0));
+  });
+
+  it("does not double count broker ingress and egress for the same event flow", () => {
+    const brokers: BrokersFile = {
+      brokers: [
+        {
+          id: "broker-a",
+          displayName: "Broker A",
+          managementUrl: "http://localhost:8080",
+          messageVpns: ["default"],
+          region: "local",
+          site: "local",
+          environment: "test",
+          tlsRejectUnauthorized: false,
+          tags: []
+        }
+      ],
+      links: []
+    };
+    const catalog: CatalogFile = {
+      display: { title: "Test", subtitle: "" },
+      owners: [{ id: "ops", displayName: "Ops" }],
+      costCenters: [{ id: "ops", displayName: "Ops" }],
+      applications: []
+    };
+    const observations: BrokerObservation[] = [
+      {
+        brokerId: "broker-a",
+        mode: "live",
+        clients: [
+          {
+            brokerId: "broker-a",
+            vpnName: "default",
+            name: "publisher",
+            connected: true,
+            ingressMsgRate: 40,
+            egressMsgRate: 0,
+            ingressByteRate: 400,
+            egressByteRate: 0
+          },
+          {
+            brokerId: "broker-a",
+            vpnName: "default",
+            name: "subscriber",
+            connected: true,
+            ingressMsgRate: 0,
+            egressMsgRate: 40,
+            ingressByteRate: 0,
+            egressByteRate: 400
+          }
+        ],
+        queues: [],
+        subscriptions: [],
+        status: { brokerId: "broker-a", displayName: "Broker A", status: "connected", mode: "live" }
+      }
+    ];
+
+    const snapshot = buildTopologySnapshot(brokers, catalog, observations, { scenarioId: "test", scenarioName: "Test" });
+
+    expect(snapshot.nodes.find((node) => node.id === "broker:broker-a")?.metrics?.msgRate).toBe(40);
   });
 });

@@ -63,12 +63,72 @@ function typeSortValue(node: TopologyNode): string {
   return String(node.metadata?.provenance ?? node.metadata?.role ?? "");
 }
 
-function compareNodes(left: TopologyNode, right: TopologyNode, sortMode: SortMode): number {
+function brokerIdsFromMetadata(node: TopologyNode): string[] {
+  const brokerIds = node.metadata?.brokerIds;
+  if (Array.isArray(brokerIds)) {
+    return brokerIds.map(String);
+  }
+  if (typeof brokerIds === "string") {
+    return brokerIds.split(",").map((brokerId) => brokerId.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function brokerFlowRanks(topology: StructuredTopology): Map<string, number> {
+  const brokerIds = new Set(topology.brokers.map((broker) => broker.id));
+  const downstream = new Map<string, Set<string>>();
+  for (const link of topology.links) {
+    if (link.kind !== "mesh" || !brokerIds.has(link.source) || !brokerIds.has(link.target)) {
+      continue;
+    }
+    const targets = downstream.get(link.source) ?? new Set<string>();
+    targets.add(link.target);
+    downstream.set(link.source, targets);
+  }
+
+  const memo = new Map<string, number>();
+  const visiting = new Set<string>();
+  const rankFor = (brokerId: string): number => {
+    if (memo.has(brokerId)) {
+      return memo.get(brokerId)!;
+    }
+    if (visiting.has(brokerId)) {
+      return 0;
+    }
+    visiting.add(brokerId);
+    const rank = [...(downstream.get(brokerId) ?? [])].reduce((max, targetId) => Math.max(max, rankFor(targetId) + 1), 0);
+    visiting.delete(brokerId);
+    memo.set(brokerId, rank);
+    return rank;
+  };
+
+  for (const brokerId of brokerIds) {
+    rankFor(brokerId);
+  }
+  return memo;
+}
+
+function nodeRouteRank(node: TopologyNode, brokerRanks: Map<string, number>): number {
+  if (node.type === "Broker") {
+    return brokerRanks.get(node.id) ?? 0;
+  }
+  const ranks = brokerIdsFromMetadata(node).map((brokerId) => brokerRanks.get(`broker:${brokerId}`) ?? 0);
+  return ranks.length > 0 ? Math.max(...ranks) : 0;
+}
+
+function compareNodes(left: TopologyNode, right: TopologyNode, sortMode: SortMode, brokerRanks: Map<string, number>): number {
+  const route = nodeRouteRank(left, brokerRanks) - nodeRouteRank(right, brokerRanks);
   if (sortMode === "throughput") {
     const rate = (right.metrics?.msgRate ?? 0) - (left.metrics?.msgRate ?? 0);
     if (rate !== 0) {
       return rate;
     }
+    if (route !== 0) {
+      return route;
+    }
+  }
+  if (route !== 0) {
+    return route;
   }
   if (sortMode === "type") {
     const type = typeSortValue(left).localeCompare(typeSortValue(right));
@@ -79,7 +139,7 @@ function compareNodes(left: TopologyNode, right: TopologyNode, sortMode: SortMod
   return left.label.localeCompare(right.label);
 }
 
-function orderActiveNodes(nodes: TopologyNode[], activeIds: Set<string>, selectedId: string | undefined, sortMode: SortMode): TopologyNode[] {
+function orderActiveNodes(nodes: TopologyNode[], activeIds: Set<string>, selectedId: string | undefined, sortMode: SortMode, brokerRanks: Map<string, number>): TopologyNode[] {
   return [...nodes].sort((left, right) => {
     const leftSelected = left.id === selectedId ? 0 : 1;
     const rightSelected = right.id === selectedId ? 0 : 1;
@@ -91,17 +151,22 @@ function orderActiveNodes(nodes: TopologyNode[], activeIds: Set<string>, selecte
     if (leftActive !== rightActive) {
       return leftActive - rightActive;
     }
-    return compareNodes(left, right, sortMode);
+    return compareNodes(left, right, sortMode, brokerRanks);
   });
 }
 
 function orderTopology(topology: StructuredTopology, activeIds: Set<string>, selectedId: string | undefined, sortMode: SortMode): StructuredTopology {
+  const brokerRanks = brokerFlowRanks(topology);
   return {
     ...topology,
-    emitters: orderActiveNodes(topology.emitters, activeIds, selectedId, sortMode),
-    brokers: orderActiveNodes(topology.brokers, activeIds, selectedId, sortMode),
-    listeners: orderActiveNodes(topology.listeners, activeIds, selectedId, sortMode)
+    emitters: orderActiveNodes(topology.emitters, activeIds, selectedId, sortMode, brokerRanks),
+    brokers: orderActiveNodes(topology.brokers, activeIds, selectedId, sortMode, brokerRanks),
+    listeners: orderActiveNodes(topology.listeners, activeIds, selectedId, sortMode, brokerRanks)
   };
+}
+
+export function brokerFlowOrderForTest(topology: StructuredTopology, sortMode: SortMode = "type"): string[] {
+  return orderTopology(topology, new Set(), undefined, sortMode).brokers.map((broker) => broker.id);
 }
 
 function NodeCard({

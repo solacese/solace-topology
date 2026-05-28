@@ -1,6 +1,6 @@
 import { FormEvent, useMemo, useState } from "react";
 import type { TopologyNode, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
-import { Pencil, Plus, RadioTower, Save, Trash2 } from "lucide-react";
+import { CheckCircle2, KeyRound, Link2, Pencil, Plus, RadioTower, Save, ServerCog, Trash2 } from "lucide-react";
 import { brokerRecordFromConfig, brokerRecordFromNode, statusLabel, type BrokerRecord } from "../lib/brokerRegistry.js";
 
 interface BrokerSettingsPanelProps {
@@ -57,7 +57,10 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
   return (
     <section className="broker-settings-panel" aria-label="Broker settings">
       <div className="section-title-row">
-        <h2>Broker Settings</h2>
+        <div>
+          <h2>Broker Settings</h2>
+          <p>Pick a broker, edit its SEMP connection, then save to reconnect the live topology.</p>
+        </div>
         <button
           className="icon-button small"
           onClick={() => {
@@ -68,6 +71,24 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
         >
           <Plus size={16} />
         </button>
+      </div>
+      <div className="setup-guide" aria-label="Broker setup steps">
+        <span>
+          <ServerCog size={15} />
+          Broker URL
+        </span>
+        <span>
+          <Link2 size={15} />
+          VPN
+        </span>
+        <span>
+          <KeyRound size={15} />
+          Auth
+        </span>
+        <span>
+          <CheckCircle2 size={15} />
+          Save and Connect
+        </span>
       </div>
       <div className="broker-settings-grid">
         <div className="broker-list">
@@ -89,6 +110,7 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
         </div>
         {editing ? (
           <form className="broker-editor" onSubmit={submitBroker}>
+            <div className="form-section-label">Identity</div>
             <label>
               Broker id
               <input disabled={Boolean(editingOriginalId)} value={editing.id} onChange={(event) => setEditing({ ...editing, id: event.target.value })} />
@@ -97,6 +119,7 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
               Display name
               <input value={editing.displayName} onChange={(event) => setEditing({ ...editing, displayName: event.target.value })} />
             </label>
+            <div className="form-section-label">Connection</div>
             <label>
               SEMP management URL
               <input value={editing.managementUrl} onChange={(event) => setEditing({ ...editing, managementUrl: event.target.value })} />
@@ -121,6 +144,7 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
               Environment
               <input value={editing.environment} onChange={(event) => setEditing({ ...editing, environment: event.target.value })} />
             </label>
+            <div className="form-section-label">Authentication</div>
             <label>
               SEMP auth
               <select value={editing.authMode} onChange={(event) => setEditing({ ...editing, authMode: event.target.value as BrokerRecord["authMode"] })}>
@@ -156,7 +180,7 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
             <div className="broker-editor-actions">
               <button type="submit">
                 <Save size={15} />
-                Save
+                Save and Connect
               </button>
               <button
                 type="button"
@@ -169,7 +193,13 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
               </button>
             </div>
           </form>
-        ) : null}
+        ) : (
+          <div className="broker-editor-empty">
+            <RadioTower size={22} />
+            <h3>Select a broker to edit its live connection.</h3>
+            <p>Use the pencil next to a broker, or add a broker with the plus button. Credentials stay in the active config and can be replaced by environment variables for production.</p>
+          </div>
+        )}
       </div>
     </section>
   );

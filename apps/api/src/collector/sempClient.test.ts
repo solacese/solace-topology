@@ -16,9 +16,9 @@ beforeEach(async () => {
           data: [
             {
               clientName: "veh-telemetry-a",
-              username: "vehicle-iot-a",
-              clientDataMessagesReceivedRate: 42,
-              clientDataBytesReceivedRate: 4200
+              clientUsername: "vehicle-iot-a",
+              rxMsgRate: 42,
+              rxByteRate: 4200
             }
           ],
           meta: { paging: { cursorQuery: "?cursor=2" } }
@@ -32,9 +32,9 @@ beforeEach(async () => {
           data: [
             {
               clientName: "mfg-analytics-a",
-              username: "analytics",
-              clientDataMessagesSentRate: 24,
-              clientDataBytesSentRate: 2400
+              originalClientUsername: "analytics",
+              averageTxMsgRate: 24,
+              averageTxByteRate: 2400
             }
           ]
         })
@@ -88,7 +88,10 @@ describe("SEMP client", () => {
 
     const observation = await new SempClient().collectBroker(broker);
     expect(observation.clients).toHaveLength(2);
+    expect(observation.clients[0]?.username).toBe("vehicle-iot-a");
     expect(observation.clients[0]?.ingressMsgRate).toBe(42);
+    expect(observation.clients[1]?.username).toBe("analytics");
+    expect(observation.clients[1]?.egressMsgRate).toBe(24);
     expect(observation.queues[0]?.name).toBe("Q.MFG.ANALYTICS");
     expect(observation.subscriptions[0]?.topic).toBe("plant/>");
   });

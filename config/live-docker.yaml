@@ -1,0 +1,219 @@
+defaultScenario: live-docker
+
+scenarios:
+  - id: live-docker
+    name: Local Live Docker Brokers
+    display:
+      title: Local Live Docker Brokers
+      subtitle: Five local PubSub+ brokers with MQTT publisher and subscriber traffic
+
+    brokers:
+      - id: local-broker-1
+        displayName: Local Broker 1
+        managementUrl: ${LIVE_BROKER_1_URL:-http://localhost:19080}
+        messageVpns: [default]
+        region: Local
+        site: Edge Site 1
+        physicalLocation: localhost:19080
+        environment: local
+        usernameEnv: SEMP_USER_LIVE
+        passwordEnv: SEMP_PASSWORD_LIVE
+        tlsRejectUnauthorized: false
+        tags: [local, edge]
+
+      - id: local-broker-2
+        displayName: Local Broker 2
+        managementUrl: ${LIVE_BROKER_2_URL:-http://localhost:29080}
+        messageVpns: [default]
+        region: Local
+        site: Edge Site 2
+        physicalLocation: localhost:29080
+        environment: local
+        usernameEnv: SEMP_USER_LIVE
+        passwordEnv: SEMP_PASSWORD_LIVE
+        tlsRejectUnauthorized: false
+        tags: [local, edge]
+
+      - id: local-broker-3
+        displayName: Local Broker 3
+        managementUrl: ${LIVE_BROKER_3_URL:-http://localhost:39080}
+        messageVpns: [default]
+        region: Local
+        site: Core Site 3
+        physicalLocation: localhost:39080
+        environment: local
+        usernameEnv: SEMP_USER_LIVE
+        passwordEnv: SEMP_PASSWORD_LIVE
+        tlsRejectUnauthorized: false
+        tags: [local, core]
+
+      - id: local-broker-4
+        displayName: Local Broker 4
+        managementUrl: ${LIVE_BROKER_4_URL:-http://localhost:49080}
+        messageVpns: [default]
+        region: Local
+        site: Cloud Site 4
+        physicalLocation: localhost:49080
+        environment: local
+        usernameEnv: SEMP_USER_LIVE
+        passwordEnv: SEMP_PASSWORD_LIVE
+        tlsRejectUnauthorized: false
+        tags: [local, cloud]
+
+      - id: local-broker-5
+        displayName: Local Broker 5
+        managementUrl: ${LIVE_BROKER_5_URL:-http://localhost:59080}
+        messageVpns: [default]
+        region: Local
+        site: Cloud Site 5
+        physicalLocation: localhost:59080
+        environment: local
+        usernameEnv: SEMP_USER_LIVE
+        passwordEnv: SEMP_PASSWORD_LIVE
+        tlsRejectUnauthorized: false
+        tags: [local, cloud]
+
+    links:
+      - from: local-broker-1
+        to: local-broker-4
+        kind: local-test
+      - from: local-broker-2
+        to: local-broker-4
+        kind: local-test
+      - from: local-broker-3
+        to: local-broker-5
+        kind: local-test
+
+    owners:
+      - id: local-test
+        displayName: Local Test
+
+    costCenters:
+      - id: local-test
+        displayName: Local Test
+
+    applications:
+      - id: live-publisher-1
+        displayName: Live Publisher 1
+        role: emitter
+        provenance: IoT
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-1]
+        clientMatchers: ["pub-b1-*"]
+        usernameMatchers: ["pub-b1"]
+        publishTopicPrefixes: ["live/b1/>"]
+
+      - id: live-publisher-2
+        displayName: Live Publisher 2
+        role: emitter
+        provenance: Manufacturing
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-2]
+        clientMatchers: ["pub-b2-*"]
+        usernameMatchers: ["pub-b2"]
+        publishTopicPrefixes: ["live/b2/>"]
+
+      - id: live-publisher-3
+        displayName: Live Publisher 3
+        role: emitter
+        provenance: Enterprise
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-3]
+        clientMatchers: ["pub-b3-*"]
+        usernameMatchers: ["pub-b3"]
+        publishTopicPrefixes: ["live/b3/>"]
+
+      - id: live-publisher-4
+        displayName: Live Publisher 4
+        role: emitter
+        provenance: Data
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-4]
+        clientMatchers: ["pub-b4-*"]
+        usernameMatchers: ["pub-b4"]
+        publishTopicPrefixes: ["live/b4/>"]
+
+      - id: live-publisher-5
+        displayName: Live Publisher 5
+        role: emitter
+        provenance: IoT
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-5]
+        clientMatchers: ["pub-b5-*"]
+        usernameMatchers: ["pub-b5"]
+        publishTopicPrefixes: ["live/b5/>"]
+
+      - id: live-subscriber-1
+        displayName: Live Subscriber 1
+        role: listener
+        provenance: Data
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-1]
+        clientMatchers: ["sub-b1-*"]
+        usernameMatchers: ["sub-b1"]
+        queueMatchers: ["Q.LIVE.B1"]
+        listen:
+          queues: ["Q.LIVE.B1"]
+          topicPrefixes: ["live/b1/>"]
+
+      - id: live-subscriber-2
+        displayName: Live Subscriber 2
+        role: listener
+        provenance: Data
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-2]
+        clientMatchers: ["sub-b2-*"]
+        usernameMatchers: ["sub-b2"]
+        queueMatchers: ["Q.LIVE.B2"]
+        listen:
+          queues: ["Q.LIVE.B2"]
+          topicPrefixes: ["live/b2/>"]
+
+      - id: live-subscriber-3
+        displayName: Live Subscriber 3
+        role: listener
+        provenance: Data
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-3]
+        clientMatchers: ["sub-b3-*"]
+        usernameMatchers: ["sub-b3"]
+        queueMatchers: ["Q.LIVE.B3"]
+        listen:
+          queues: ["Q.LIVE.B3"]
+          topicPrefixes: ["live/b3/>"]
+
+      - id: live-subscriber-4
+        displayName: Live Subscriber 4
+        role: listener
+        provenance: Data
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-4]
+        clientMatchers: ["sub-b4-*"]
+        usernameMatchers: ["sub-b4"]
+        queueMatchers: ["Q.LIVE.B4"]
+        listen:
+          queues: ["Q.LIVE.B4"]
+          topicPrefixes: ["live/b4/>"]
+
+      - id: live-subscriber-5
+        displayName: Live Subscriber 5
+        role: listener
+        provenance: Data
+        owner: local-test
+        costCenter: local-test
+        brokerIds: [local-broker-5]
+        clientMatchers: ["sub-b5-*"]
+        usernameMatchers: ["sub-b5"]
+        queueMatchers: ["Q.LIVE.B5"]
+        listen:
+          queues: ["Q.LIVE.B5"]
+          topicPrefixes: ["live/b5/>"]

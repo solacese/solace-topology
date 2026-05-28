@@ -81,6 +81,22 @@ function confidenceFor(rate: number, declared: boolean): Confidence {
   return declared ? "declared" : "observed";
 }
 
+function brokerEventRate(clients: ClientObservation[] | undefined): { msgRate: number; byteRate: number } {
+  const totals = (clients ?? []).reduce(
+    (acc, client) => ({
+      ingressMsgRate: acc.ingressMsgRate + client.ingressMsgRate,
+      egressMsgRate: acc.egressMsgRate + client.egressMsgRate,
+      ingressByteRate: acc.ingressByteRate + client.ingressByteRate,
+      egressByteRate: acc.egressByteRate + client.egressByteRate
+    }),
+    { ingressMsgRate: 0, egressMsgRate: 0, ingressByteRate: 0, egressByteRate: 0 }
+  );
+  return {
+    msgRate: Math.max(totals.ingressMsgRate, totals.egressMsgRate),
+    byteRate: Math.max(totals.ingressByteRate, totals.egressByteRate)
+  };
+}
+
 export function buildTopologySnapshot(brokersFile: BrokersFile, catalog: CatalogFile, observations: BrokerObservation[], identity: SnapshotIdentity): TopologySnapshot {
   const nodes = new Map<string, TopologyNode>();
   const edges = new Map<string, TopologyEdge>();
@@ -93,15 +109,15 @@ export function buildTopologySnapshot(brokersFile: BrokersFile, catalog: Catalog
 
   for (const broker of brokersFile.brokers) {
     const observation = observationsByBroker.get(broker.id);
+    const brokerMetrics = brokerEventRate(observation?.clients);
     addNode(nodes, {
       id: `broker:${broker.id}`,
       type: "Broker",
       label: broker.displayName,
       status: observation?.status.status === "connected" || observation?.status.status === "sample" ? "up" : "down",
       metrics: {
-        msgRate:
-          observation?.clients.reduce((sum, client) => sum + client.ingressMsgRate + client.egressMsgRate, 0) ??
-          0,
+        msgRate: brokerMetrics.msgRate,
+        byteRate: brokerMetrics.byteRate,
         connectedClients: observation?.clients.filter((client) => client.connected).length ?? 0,
         healthScore: observation?.status.status === "connected" || observation?.status.status === "sample" ? 100 : 0
       },

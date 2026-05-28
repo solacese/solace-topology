@@ -110,8 +110,8 @@ button {
 
 .app-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-rows: auto auto 1fr;
+  display: flex;
+  flex-direction: column;
   gap: var(--space);
   padding: var(--space);
 }
@@ -278,14 +278,24 @@ button {
 }
 
 .workspace {
+  flex: 1 1 auto;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space);
+  align-items: stretch;
 }
 
 .workspace.has-detail {
-  grid-template-columns: minmax(0, 1fr) 510px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.workspace.has-detail .graph-shell {
+  grid-column: span 3;
+}
+
+.workspace.has-detail .right-panel {
+  grid-column: span 1;
 }
 
 .graph-shell,
@@ -378,8 +388,8 @@ button {
 
 .structured-map {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(230px, 0.82fr) minmax(240px, 1fr);
-  gap: clamp(18px, 4vw, 56px);
+  grid-template-columns: repeat(3, minmax(210px, 1fr));
+  gap: clamp(14px, 2vw, 28px);
 }
 
 .column-heading {
@@ -549,6 +559,36 @@ button {
   padding: 12px;
 }
 
+.section-title-row p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-small);
+}
+
+.setup-guide {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.setup-guide span {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  color: #dcebf4;
+  background: rgba(5, 13, 22, 0.68);
+  font-size: var(--font-small);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.setup-guide svg {
+  color: var(--solace);
+}
+
 .broker-settings-grid {
   display: grid;
   grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
@@ -570,6 +610,10 @@ button {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
+}
+
+.broker-settings-panel .form-section-label {
+  grid-column: 1 / -1;
 }
 
 .broker-settings-panel .broker-editor-actions {
@@ -663,6 +707,15 @@ button {
   font-size: 0.78rem;
 }
 
+.form-section-label {
+  margin-top: 3px;
+  color: var(--solace);
+  font-size: var(--font-small);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .broker-editor input,
 .broker-editor select {
   width: 100%;
@@ -700,6 +753,32 @@ button {
   background: var(--solace);
   border-color: var(--solace);
   font-weight: 800;
+}
+
+.broker-editor-empty {
+  min-height: 210px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: rgba(5, 13, 22, 0.46);
+  padding: 18px;
+}
+
+.broker-editor-empty svg {
+  color: var(--solace);
+}
+
+.broker-editor-empty h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.broker-editor-empty p {
+  max-width: 54ch;
+  margin: 0;
+  color: var(--text-muted);
 }
 
 .provenance-bars,
@@ -870,6 +949,13 @@ button {
   padding: 12px;
 }
 
+.yaml-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  align-items: stretch;
+}
+
 .yaml-editor-panel textarea {
   width: 100%;
   min-height: 280px;
@@ -881,6 +967,40 @@ button {
   font-size: 0.8rem;
   line-height: 1.45;
   padding: 10px;
+}
+
+.yaml-assist {
+  border: 1px solid var(--line);
+  background: rgba(5, 13, 22, 0.62);
+  padding: 12px;
+}
+
+.yaml-assist h3 {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+}
+
+.yaml-assist dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.yaml-assist div {
+  display: grid;
+  gap: 2px;
+}
+
+.yaml-assist dt {
+  color: #eef6fb;
+  font-weight: 800;
+}
+
+.yaml-assist dd {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-small);
+  overflow-wrap: anywhere;
 }
 
 .yaml-actions {
@@ -923,19 +1043,41 @@ button {
   }
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1280px) {
   .workspace,
   .workspace.has-detail {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.55fr);
+  }
+
+  .workspace.has-detail .graph-shell,
+  .workspace.has-detail .right-panel {
+    grid-column: auto;
   }
 
   .right-panel {
     max-height: none;
   }
+}
+
+@media (max-width: 1120px) {
+  .workspace,
+  .workspace.has-detail,
+  .yaml-editor-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace.has-detail .graph-shell,
+  .workspace.has-detail .right-panel {
+    grid-column: auto;
+  }
 
   .broker-settings-grid,
   .broker-settings-panel .broker-editor {
     grid-template-columns: 1fr;
+  }
+
+  .setup-guide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -983,5 +1125,9 @@ button {
 
   .structured-map {
     min-height: 480px;
+  }
+
+  .setup-guide {
+    grid-template-columns: 1fr;
   }
 }
