@@ -17,6 +17,8 @@ interface RenderedLink extends StructuredLink {
   dimmed: boolean;
 }
 
+type SortMode = "type" | "name" | "throughput";
+
 function roleLabel(role: string | undefined): string {
   if (role === "emitter") {
     return "Publisher";
@@ -52,10 +54,31 @@ function brokerKindLabel(kind: "edge" | "cloud" | "core"): string {
   return "Core broker";
 }
 
-function orderActiveNodes(nodes: TopologyNode[], activeIds: Set<string>, selectedId: string | undefined): TopologyNode[] {
-  if (!selectedId || activeIds.size === 0) {
-    return nodes;
+function typeSortValue(node: TopologyNode): string {
+  if (node.type === "Broker") {
+    const rank = { edge: "0", core: "1", cloud: "2" }[brokerKind(node)];
+    return `${rank}:${brokerKind(node)}`;
   }
+  return String(node.metadata?.provenance ?? node.metadata?.role ?? "");
+}
+
+function compareNodes(left: TopologyNode, right: TopologyNode, sortMode: SortMode): number {
+  if (sortMode === "throughput") {
+    const rate = (right.metrics?.msgRate ?? 0) - (left.metrics?.msgRate ?? 0);
+    if (rate !== 0) {
+      return rate;
+    }
+  }
+  if (sortMode === "type") {
+    const type = typeSortValue(left).localeCompare(typeSortValue(right));
+    if (type !== 0) {
+      return type;
+    }
+  }
+  return left.label.localeCompare(right.label);
+}
+
+function orderActiveNodes(nodes: TopologyNode[], activeIds: Set<string>, selectedId: string | undefined, sortMode: SortMode): TopologyNode[] {
   return [...nodes].sort((left, right) => {
     const leftSelected = left.id === selectedId ? 0 : 1;
     const rightSelected = right.id === selectedId ? 0 : 1;
@@ -67,16 +90,16 @@ function orderActiveNodes(nodes: TopologyNode[], activeIds: Set<string>, selecte
     if (leftActive !== rightActive) {
       return leftActive - rightActive;
     }
-    return left.label.localeCompare(right.label);
+    return compareNodes(left, right, sortMode);
   });
 }
 
-function orderTopology(topology: StructuredTopology, activeIds: Set<string>, selectedId: string | undefined): StructuredTopology {
+function orderTopology(topology: StructuredTopology, activeIds: Set<string>, selectedId: string | undefined, sortMode: SortMode): StructuredTopology {
   return {
     ...topology,
-    emitters: orderActiveNodes(topology.emitters, activeIds, selectedId),
-    brokers: orderActiveNodes(topology.brokers, activeIds, selectedId),
-    listeners: orderActiveNodes(topology.listeners, activeIds, selectedId)
+    emitters: orderActiveNodes(topology.emitters, activeIds, selectedId, sortMode),
+    brokers: orderActiveNodes(topology.brokers, activeIds, selectedId, sortMode),
+    listeners: orderActiveNodes(topology.listeners, activeIds, selectedId, sortMode)
   };
 }
 
@@ -128,7 +151,8 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
   const relatedBrokers = useMemo(() => relatedBrokerIds(snapshot, selectedId), [selectedId, snapshot]);
   const activeIds = useMemo(() => activeRouteNodeIds(snapshot, selectedId), [selectedId, snapshot]);
   const routeOffsets = useMemo(() => brokerRouteOffsets(snapshot, selectedId), [selectedId, snapshot]);
-  const orderedTopology = useMemo(() => orderTopology(topology, activeIds, selectedId), [activeIds, selectedId, topology]);
+  const [sortMode, setSortMode] = useState<SortMode>("type");
+  const orderedTopology = useMemo(() => orderTopology(topology, activeIds, selectedId, sortMode), [activeIds, selectedId, sortMode, topology]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const refs = useRef(new Map<string, HTMLButtonElement>());
   const [links, setLinks] = useState<RenderedLink[]>([]);
@@ -274,7 +298,17 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
 
         <div className="graph-count">
           <Activity size={15} />
-          {orderedTopology.emitters.length} publishers, {orderedTopology.brokers.length} brokers, {orderedTopology.listeners.length} subscribers
+          <span>
+            {orderedTopology.emitters.length} publishers, {orderedTopology.brokers.length} brokers, {orderedTopology.listeners.length} subscribers
+          </span>
+          <label className="sort-control">
+            <span>Sort</span>
+            <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
+              <option value="type">Type</option>
+              <option value="name">Name</option>
+              <option value="throughput">Throughput</option>
+            </select>
+          </label>
         </div>
       </div>
     </section>
