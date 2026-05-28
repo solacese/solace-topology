@@ -1,0 +1,25 @@
+{
+  "name": "solace-topology",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source Solace PubSub+ topology map proof of concept.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run build -w @solace-topology/shared && concurrently -n api,web -c cyan,green \"npm run dev -w @solace-topology/api\" \"npm run dev -w @solace-topology/web\"",
+    "build": "npm run build -w @solace-topology/shared && npm run build -w @solace-topology/api && npm run build -w @solace-topology/web",
+    "build:pages": "node scripts/prepare-pages-demo.mjs && VITE_STATIC_DEMO=true VITE_BASE_PATH=/solace-topology/ npm run build -w @solace-topology/shared && VITE_STATIC_DEMO=true VITE_BASE_PATH=/solace-topology/ npm run build -w @solace-topology/web",
+    "test": "npm run build -w @solace-topology/shared && npm run test -w @solace-topology/shared && npm run test -w @solace-topology/api && npm run test -w @solace-topology/web",
+    "typecheck": "npm run build -w @solace-topology/shared && npm run typecheck -w @solace-topology/api && npm run typecheck -w @solace-topology/web"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}
