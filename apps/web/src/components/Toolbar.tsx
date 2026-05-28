@@ -1,14 +1,17 @@
 import type { TopologySnapshot } from "@solace-topology/shared";
 import { Search } from "lucide-react";
+import type { SortMode } from "./TopologyGraph.js";
 import { availableProvenances, type GraphFilters } from "../lib/graph.js";
 
 interface ToolbarProps {
   snapshot: TopologySnapshot;
   filters: GraphFilters;
+  sortMode: SortMode;
   onFiltersChange: (filters: GraphFilters) => void;
+  onSortModeChange: (sortMode: SortMode) => void;
 }
 
-export function Toolbar({ snapshot, filters, onFiltersChange }: ToolbarProps) {
+export function Toolbar({ snapshot, filters, sortMode, onFiltersChange, onSortModeChange }: ToolbarProps) {
   const provenances = availableProvenances(snapshot);
 
   function toggleProvenance(provenance: string) {
@@ -32,6 +35,15 @@ export function Toolbar({ snapshot, filters, onFiltersChange }: ToolbarProps) {
           placeholder="Search apps, topics, brokers"
         />
       </div>
+
+      <label className="sort-control">
+        <span>Sort</span>
+        <select value={sortMode} onChange={(event) => onSortModeChange(event.target.value as SortMode)}>
+          <option value="type">Type</option>
+          <option value="name">Name</option>
+          <option value="throughput">Throughput</option>
+        </select>
+      </label>
 
       <div className="control-group provenance-group" aria-label="Provenance filters">
         {provenances.map((provenance) => (

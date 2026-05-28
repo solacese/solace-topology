@@ -301,26 +301,14 @@ button {
   position: relative;
 }
 
-.graph-count {
-  position: absolute;
-  left: var(--space);
-  bottom: var(--space);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  color: #d9eaf2;
-  border: 0;
-  background: rgba(5, 13, 22, 0.82);
-  border-radius: 999px;
-  padding: 6px 8px 6px 10px;
-  font-size: var(--font-ui);
-}
-
 .sort-control {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  height: var(--control-h);
+  border: 1px solid var(--line);
+  background: rgba(5, 13, 22, 0.82);
+  padding: 0 10px;
   color: var(--text-muted);
   font-size: var(--font-small);
 }
@@ -339,7 +327,7 @@ button {
   min-height: 620px;
   height: 100%;
   overflow: auto;
-  padding: 0 0 56px;
+  padding: 0;
   isolation: isolate;
 }
 

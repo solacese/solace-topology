@@ -4,7 +4,7 @@ import { FileCode2, Network, Save, Settings, X } from "lucide-react";
 import { BrokerSettingsPanel } from "./components/BrokerSettingsPanel.js";
 import { RightPanel } from "./components/RightPanel.js";
 import { Toolbar } from "./components/Toolbar.js";
-import { TopologyGraph } from "./components/TopologyGraph.js";
+import { TopologyGraph, type SortMode } from "./components/TopologyGraph.js";
 import { useTopology } from "./hooks/useTopology.js";
 import { brokerConfigFromRecord, type BrokerRecord } from "./lib/brokerRegistry.js";
 import type { GraphFilters } from "./lib/graph.js";
@@ -14,6 +14,7 @@ export function App() {
   const [selected, setSelected] = useState<TopologyNode | undefined>();
   const [yamlOpen, setYamlOpen] = useState(false);
   const [brokerSettingsOpen, setBrokerSettingsOpen] = useState(false);
+  const [sortMode, setSortMode] = useState<SortMode>("type");
   const [yamlDraft, setYamlDraft] = useState("");
   const [yamlError, setYamlError] = useState("");
   const [filters, setFilters] = useState<GraphFilters>({
@@ -150,10 +151,10 @@ export function App() {
         </section>
       ) : null}
 
-      <Toolbar snapshot={topology.snapshot} filters={filters} onFiltersChange={setFilters} />
+      <Toolbar snapshot={topology.snapshot} filters={filters} sortMode={sortMode} onFiltersChange={setFilters} onSortModeChange={setSortMode} />
 
       <section className="workspace has-detail">
-        <TopologyGraph snapshot={topology.snapshot} filters={filters} selectedId={selected?.id} onSelect={setSelected} />
+        <TopologyGraph snapshot={topology.snapshot} filters={filters} sortMode={sortMode} selectedId={selected?.id} onSelect={setSelected} />
         <RightPanel snapshot={topology.snapshot} selected={selected} onSelect={setSelected} />
       </section>
     </main>

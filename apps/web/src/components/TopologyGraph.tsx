@@ -6,6 +6,7 @@ import { activeRouteNodeIds, brokerRouteOffsets, buildStructuredTopology, relate
 interface TopologyGraphProps {
   snapshot: TopologySnapshot;
   filters: GraphFilters;
+  sortMode: SortMode;
   selectedId?: string;
   onSelect: (item: TopologyNode | undefined) => void;
 }
@@ -17,7 +18,7 @@ interface RenderedLink extends StructuredLink {
   dimmed: boolean;
 }
 
-type SortMode = "type" | "name" | "throughput";
+export type SortMode = "type" | "name" | "throughput";
 
 function roleLabel(role: string | undefined): string {
   if (role === "emitter") {
@@ -146,12 +147,11 @@ function NodeCard({
   );
 }
 
-export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: TopologyGraphProps) {
+export function TopologyGraph({ snapshot, filters, sortMode, selectedId, onSelect }: TopologyGraphProps) {
   const topology = useMemo(() => buildStructuredTopology(snapshot, filters), [filters, snapshot]);
   const relatedBrokers = useMemo(() => relatedBrokerIds(snapshot, selectedId), [selectedId, snapshot]);
   const activeIds = useMemo(() => activeRouteNodeIds(snapshot, selectedId), [selectedId, snapshot]);
   const routeOffsets = useMemo(() => brokerRouteOffsets(snapshot, selectedId), [selectedId, snapshot]);
-  const [sortMode, setSortMode] = useState<SortMode>("type");
   const orderedTopology = useMemo(() => orderTopology(topology, activeIds, selectedId, sortMode), [activeIds, selectedId, sortMode, topology]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const refs = useRef(new Map<string, HTMLButtonElement>());
@@ -246,7 +246,7 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
         ref={containerRef}
         onClick={(event) => {
           const target = event.target instanceof Element ? event.target : undefined;
-          if (target && !target.closest(".topology-node, .column-heading, .graph-count")) {
+          if (target && !target.closest(".topology-node, .column-heading")) {
             onSelect(undefined);
           }
         }}
@@ -296,16 +296,6 @@ export function TopologyGraph({ snapshot, filters, selectedId, onSelect }: Topol
           ))}
         </div>
 
-        <div className="graph-count">
-          <label className="sort-control">
-            <span>Sort</span>
-            <select value={sortMode} onChange={(event) => setSortMode(event.target.value as SortMode)}>
-              <option value="type">Type</option>
-              <option value="name">Name</option>
-              <option value="throughput">Throughput</option>
-            </select>
-          </label>
-        </div>
       </div>
     </section>
   );
