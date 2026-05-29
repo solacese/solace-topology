@@ -156,7 +156,7 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
               <>
                 <label>
                   SEMP username
-                  <input value={editing.username} onChange={(event) => setEditing({ ...editing, username: event.target.value })} />
+                  <input autoComplete="username" value={editing.username} onChange={(event) => setEditing({ ...editing, username: event.target.value })} />
                 </label>
                 <label>
                   SEMP password

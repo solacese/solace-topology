@@ -64,17 +64,24 @@ Use **Settings** in the top-right of the app for guided setup:
   credentials, or SEMP API key.
 - Event Portal metadata source: API base URL, token environment variable,
   application domain ID, environment ID, and sync mode.
+- AI mapping helper: optional LiteLLM proxy URL, model, API key environment
+  variable, and temperature for metadata mapping suggestions.
 - Metadata mapping: publishers, subscribers, provenance, owners, cost centers,
   client matchers, queue matchers, and topic mappings.
 - Discovered runtime inventory: broker health, queues, topic patterns,
   subscriptions, and links collected from broker polling.
-- YAML Config: bulk edits to the full active scenario.
+- YAML Config: sectioned edits for overview, brokers, Event Portal, AI helper,
+  ownership, applications, or the full active scenario.
 
-Broker and Event Portal credentials can be supplied as environment variable
+Broker, Event Portal, and LiteLLM credentials can be supplied as environment variable
 references for production deployments.
 
 The collector uses only read-only SEMP GET requests. It polls every 3 seconds
 by default and falls back to the sample topology if no broker can be reached.
+
+The AI helper calls a LiteLLM-compatible `/chat/completions` endpoint from the
+API process. It returns draft mapping suggestions only; it does not mutate the
+scenario automatically.
 
 ## Project Structure
 

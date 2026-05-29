@@ -29,7 +29,6 @@
 
 body {
   margin: 0;
-  min-width: 320px;
   min-height: 100vh;
   background: #08111c;
   font-size: 13px;
@@ -469,6 +468,12 @@ button {
   font-weight: 800;
 }
 
+.settings-actions button + button {
+  color: #eef6fb;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--line);
+}
+
 .settings-actions button:disabled {
   cursor: default;
   opacity: 0.45;
@@ -478,6 +483,38 @@ button {
   color: var(--solace);
   font-size: var(--font-small);
   font-weight: 800;
+}
+
+.helper-note {
+  margin-top: 10px;
+  color: var(--text-muted);
+  background: rgba(5, 13, 22, 0.46);
+  padding: 9px 10px;
+  font-size: var(--font-small);
+}
+
+.ai-output {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  background: rgba(5, 13, 22, 0.62);
+  padding: 10px;
+}
+
+.ai-output strong {
+  color: var(--solace);
+  font-size: var(--font-small);
+}
+
+.ai-output pre {
+  max-height: 320px;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: #eef6fb;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .discovery-grid,
@@ -576,6 +613,32 @@ button {
   display: block;
   margin-top: 2px;
   color: var(--text-muted);
+}
+
+.yaml-section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.yaml-section-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  color: #dcebf4;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 9px;
+  font-size: var(--font-small);
+  font-weight: 800;
+}
+
+.yaml-section-tabs button.active {
+  color: #001f18;
+  border-color: var(--solace);
+  background: var(--solace);
 }
 
 .graph-shell,

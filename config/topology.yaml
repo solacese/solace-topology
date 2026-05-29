@@ -172,6 +172,13 @@ scenarios:
       environmentId: production
       syncMode: metadata-only
 
+    aiAssistant:
+      enabled: false
+      baseUrl: http://localhost:4000
+      apiKeyEnv: LITELLM_API_KEY
+      model: gpt-4o-mini
+      temperature: 0.2
+
     owners:
       - id: connected-vehicle
         displayName: Connected Vehicle Platform

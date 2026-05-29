@@ -59,6 +59,15 @@ const eventPortalSchema = z.object({
   syncMode: z.enum(["read-only", "metadata-only"]).default("metadata-only")
 });
 
+const aiAssistantSchema = z.object({
+  enabled: z.boolean().default(false),
+  baseUrl: z.string().default("http://localhost:4000"),
+  apiKeyEnv: z.string().optional(),
+  apiKey: z.string().optional(),
+  model: z.string().default("gpt-4o-mini"),
+  temperature: z.number().min(0).max(2).default(0.2)
+});
+
 const scenarioSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -69,6 +78,7 @@ const scenarioSchema = z.object({
   brokers: z.array(brokerSchema).min(1),
   links: z.array(linkSchema).default([]),
   eventPortal: eventPortalSchema.optional(),
+  aiAssistant: aiAssistantSchema.optional(),
   owners: z.array(z.object({ id: z.string().min(1), displayName: z.string().min(1) })),
   costCenters: z.array(z.object({ id: z.string().min(1), displayName: z.string().min(1) })),
   applications: z.array(appSchema).min(1)

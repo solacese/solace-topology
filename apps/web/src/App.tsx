@@ -98,6 +98,7 @@ export function App() {
           snapshot={topology.snapshot}
           scenarioConfig={topology.scenarioConfig}
           isConnecting={topology.isConnecting}
+          isStaticMode={topology.isStaticMode}
           onClose={() => setSettingsOpen(false)}
           onSelect={setSelected}
           onSaveBroker={(record) => void saveBroker(record)}
@@ -105,6 +106,7 @@ export function App() {
           onSaveScenario={topology.updateScenarioConfig}
           loadScenarioYaml={topology.loadScenarioYaml}
           onSaveYaml={topology.updateScenarioYaml}
+          onSuggestMappings={topology.suggestMappings}
         />
       ) : (
         <>

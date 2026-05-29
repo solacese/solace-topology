@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import type { EventPortalConfig, TopologyNode, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
-import { ArrowLeft, BookOpenCheck, CheckCircle2, CloudCog, Database, FileCode2, RadioTower, Save, Search, ServerCog, Tags } from "lucide-react";
+import YAML from "yaml";
+import type { AiAssistantConfig, EventPortalConfig, MappingSuggestionsResponse, TopologyNode, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
+import { ArrowLeft, BookOpenCheck, Bot, CheckCircle2, CloudCog, Database, FileCode2, ListTree, RadioTower, Save, Search, ServerCog, Sparkles, Tags } from "lucide-react";
 import { BrokerSettingsPanel } from "./BrokerSettingsPanel.js";
 import type { BrokerRecord } from "../lib/brokerRegistry.js";
 
@@ -9,6 +10,7 @@ interface SettingsPageProps {
   snapshot: TopologySnapshot;
   scenarioConfig?: TopologyScenario;
   isConnecting: boolean;
+  isStaticMode: boolean;
   onClose: () => void;
   onSelect: (item: TopologyNode | undefined) => void;
   onSaveBroker: (broker: BrokerRecord) => void;
@@ -16,7 +18,10 @@ interface SettingsPageProps {
   onSaveScenario: (scenario: TopologyScenario) => Promise<void>;
   loadScenarioYaml: () => Promise<string>;
   onSaveYaml: (yaml: string) => Promise<void>;
+  onSuggestMappings: () => Promise<MappingSuggestionsResponse>;
 }
+
+type YamlSectionId = "overview" | "brokers" | "eventPortal" | "aiAssistant" | "ownership" | "applications" | "full";
 
 const emptyEventPortal: EventPortalConfig = {
   enabled: false,
@@ -26,6 +31,24 @@ const emptyEventPortal: EventPortalConfig = {
   environmentId: "",
   syncMode: "metadata-only"
 };
+
+const emptyAiAssistant: AiAssistantConfig = {
+  enabled: false,
+  baseUrl: "http://localhost:4000",
+  apiKeyEnv: "LITELLM_API_KEY",
+  model: "gpt-4o-mini",
+  temperature: 0.2
+};
+
+const yamlSections: Array<{ id: YamlSectionId; label: string; description: string }> = [
+  { id: "overview", label: "Overview", description: "Scenario identity and display text." },
+  { id: "brokers", label: "Brokers", description: "Broker inventory, physical location, and broker-to-broker links." },
+  { id: "eventPortal", label: "Event Portal", description: "Governed metadata source for applications, events, schemas, and topic intent." },
+  { id: "aiAssistant", label: "AI Helper", description: "LiteLLM proxy settings for mapping suggestions." },
+  { id: "ownership", label: "Ownership", description: "Owners and cost centers used for planning and chargeback views." },
+  { id: "applications", label: "Applications", description: "Publishers, subscribers, matchers, queues, and topic mappings." },
+  { id: "full", label: "Full YAML", description: "The complete active scenario for bulk edits." }
+];
 
 function roleName(role: string): string {
   if (role === "emitter") {
@@ -41,19 +64,109 @@ function compactList(values: string[] | undefined): string {
   return values?.length ? values.join(", ") : "Not mapped";
 }
 
+function yamlString(value: unknown): string {
+  return YAML.stringify(value, { lineWidth: 140 });
+}
+
 function eventPortalReady(config: EventPortalConfig): boolean {
   return Boolean(config.enabled && config.baseUrl && (config.tokenEnv || config.token) && config.applicationDomainId);
 }
 
-function normalizeEventPortal(config: EventPortalConfig): EventPortalConfig {
+function aiReady(config: AiAssistantConfig): boolean {
+  return Boolean(config.enabled && config.baseUrl && config.model);
+}
+
+function normalizeEventPortal(config: Partial<EventPortalConfig> | undefined): EventPortalConfig {
   return {
-    enabled: Boolean(config.enabled),
-    baseUrl: config.baseUrl.trim() || "https://api.solace.cloud",
-    tokenEnv: config.tokenEnv?.trim() || undefined,
-    token: config.token || undefined,
-    applicationDomainId: config.applicationDomainId?.trim() || undefined,
-    environmentId: config.environmentId?.trim() || undefined,
-    syncMode: config.syncMode ?? "metadata-only"
+    enabled: Boolean(config?.enabled),
+    baseUrl: config?.baseUrl?.trim() || "https://api.solace.cloud",
+    tokenEnv: config?.tokenEnv?.trim() || undefined,
+    token: config?.token || undefined,
+    applicationDomainId: config?.applicationDomainId?.trim() || undefined,
+    environmentId: config?.environmentId?.trim() || undefined,
+    syncMode: config?.syncMode ?? "metadata-only"
+  };
+}
+
+function normalizeAiAssistant(config: Partial<AiAssistantConfig> | undefined): AiAssistantConfig {
+  const temperature = typeof config?.temperature === "number" && Number.isFinite(config.temperature) ? config.temperature : 0.2;
+  return {
+    enabled: Boolean(config?.enabled),
+    baseUrl: config?.baseUrl?.trim() || "http://localhost:4000",
+    apiKeyEnv: config?.apiKeyEnv?.trim() || undefined,
+    apiKey: config?.apiKey || undefined,
+    model: config?.model?.trim() || "gpt-4o-mini",
+    temperature
+  };
+}
+
+function sectionValue(scenario: TopologyScenario | undefined, sectionId: YamlSectionId, fullYaml: string): string {
+  if (!scenario) {
+    return sectionId === "full" ? fullYaml : "";
+  }
+  if (sectionId === "full") {
+    return fullYaml || yamlString(scenario);
+  }
+  if (sectionId === "overview") {
+    return yamlString({ id: scenario.id, name: scenario.name, display: scenario.display });
+  }
+  if (sectionId === "brokers") {
+    return yamlString({ brokers: scenario.brokers, links: scenario.links });
+  }
+  if (sectionId === "eventPortal") {
+    return yamlString({ eventPortal: scenario.eventPortal ?? emptyEventPortal });
+  }
+  if (sectionId === "aiAssistant") {
+    return yamlString({ aiAssistant: scenario.aiAssistant ?? emptyAiAssistant });
+  }
+  if (sectionId === "ownership") {
+    return yamlString({ owners: scenario.owners, costCenters: scenario.costCenters });
+  }
+  return yamlString({ applications: scenario.applications });
+}
+
+function mergeScenarioSection(current: TopologyScenario, sectionId: YamlSectionId, source: string): TopologyScenario {
+  const parsed = (YAML.parse(source) ?? {}) as Partial<TopologyScenario>;
+  if (sectionId === "full") {
+    return parsed as TopologyScenario;
+  }
+  if (sectionId === "overview") {
+    return {
+      ...current,
+      id: typeof parsed.id === "string" ? parsed.id : current.id,
+      name: typeof parsed.name === "string" ? parsed.name : current.name,
+      display: parsed.display ?? current.display
+    };
+  }
+  if (sectionId === "brokers") {
+    return {
+      ...current,
+      brokers: Array.isArray(parsed.brokers) ? parsed.brokers : current.brokers,
+      links: Array.isArray(parsed.links) ? parsed.links : current.links
+    };
+  }
+  if (sectionId === "eventPortal") {
+    return {
+      ...current,
+      eventPortal: normalizeEventPortal((parsed.eventPortal ?? emptyEventPortal) as EventPortalConfig)
+    };
+  }
+  if (sectionId === "aiAssistant") {
+    return {
+      ...current,
+      aiAssistant: normalizeAiAssistant((parsed.aiAssistant ?? emptyAiAssistant) as AiAssistantConfig)
+    };
+  }
+  if (sectionId === "ownership") {
+    return {
+      ...current,
+      owners: Array.isArray(parsed.owners) ? parsed.owners : current.owners,
+      costCenters: Array.isArray(parsed.costCenters) ? parsed.costCenters : current.costCenters
+    };
+  }
+  return {
+    ...current,
+    applications: Array.isArray(parsed.applications) ? parsed.applications : current.applications
   };
 }
 
@@ -61,23 +174,33 @@ export function SettingsPage({
   snapshot,
   scenarioConfig,
   isConnecting,
+  isStaticMode,
   onClose,
   onSelect,
   onSaveBroker,
   onRemoveBroker,
   onSaveScenario,
   loadScenarioYaml,
-  onSaveYaml
+  onSaveYaml,
+  onSuggestMappings
 }: SettingsPageProps) {
   const [eventPortalDraft, setEventPortalDraft] = useState<EventPortalConfig>(scenarioConfig?.eventPortal ?? emptyEventPortal);
+  const [aiDraft, setAiDraft] = useState<AiAssistantConfig>(scenarioConfig?.aiAssistant ?? emptyAiAssistant);
+  const [yamlSection, setYamlSection] = useState<YamlSectionId>("overview");
   const [yamlDraft, setYamlDraft] = useState("");
+  const [sectionDraft, setSectionDraft] = useState("");
   const [yamlError, setYamlError] = useState("");
   const [yamlSaved, setYamlSaved] = useState("");
   const [eventPortalSaved, setEventPortalSaved] = useState("");
+  const [aiSaved, setAiSaved] = useState("");
+  const [aiError, setAiError] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<MappingSuggestionsResponse | undefined>();
 
   useEffect(() => {
     setEventPortalDraft(scenarioConfig?.eventPortal ?? emptyEventPortal);
-  }, [scenarioConfig?.eventPortal, scenarioConfig?.id]);
+    setAiDraft(scenarioConfig?.aiAssistant ?? emptyAiAssistant);
+  }, [scenarioConfig?.eventPortal, scenarioConfig?.aiAssistant, scenarioConfig?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,6 +221,10 @@ export function SettingsPage({
       cancelled = true;
     };
   }, [loadScenarioYaml, scenarioConfig?.id]);
+
+  useEffect(() => {
+    setSectionDraft(sectionValue(scenarioConfig, yamlSection, yamlDraft));
+  }, [scenarioConfig, yamlDraft, yamlSection]);
 
   const discovered = useMemo(() => {
     const queues = snapshot.nodes.filter((node) => node.type === "Queue");
@@ -129,10 +256,12 @@ export function SettingsPage({
     if (!scenarioConfig) {
       return;
     }
+    const nextEventPortal = normalizeEventPortal(eventPortalDraft);
     await onSaveScenario({
       ...scenarioConfig,
-      eventPortal: normalizeEventPortal(eventPortalDraft)
+      eventPortal: nextEventPortal
     });
+    setEventPortalDraft(nextEventPortal);
     setEventPortalSaved("Saved");
   }
 
@@ -141,9 +270,57 @@ export function SettingsPage({
     void saveEventPortal();
   }
 
-  async function saveYaml() {
+  async function saveAiAssistant() {
+    if (!scenarioConfig) {
+      return;
+    }
+    const nextAiAssistant = normalizeAiAssistant(aiDraft);
+    await onSaveScenario({
+      ...scenarioConfig,
+      aiAssistant: nextAiAssistant
+    });
+    setAiDraft(nextAiAssistant);
+    setAiSaved("Saved");
+    setAiError("");
+  }
+
+  function submitAiAssistant(event: FormEvent) {
+    event.preventDefault();
+    void saveAiAssistant();
+  }
+
+  async function runAiHelper() {
+    setAiLoading(true);
+    setAiError("");
     try {
-      await onSaveYaml(yamlDraft);
+      setAiSuggestion(await onSuggestMappings());
+    } catch (reason) {
+      setAiSuggestion(undefined);
+      setAiError((reason as Error).message);
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  async function saveYamlSection() {
+    if (!scenarioConfig) {
+      return;
+    }
+    try {
+      if (yamlSection === "full") {
+        await onSaveYaml(sectionDraft);
+        setYamlDraft(sectionDraft);
+      } else {
+        const nextScenario = mergeScenarioSection(scenarioConfig, yamlSection, sectionDraft);
+        await onSaveScenario(nextScenario);
+        setYamlDraft(yamlString(nextScenario));
+        if (yamlSection === "eventPortal") {
+          setEventPortalDraft(nextScenario.eventPortal ?? emptyEventPortal);
+        }
+        if (yamlSection === "aiAssistant") {
+          setAiDraft(nextScenario.aiAssistant ?? emptyAiAssistant);
+        }
+      }
       setYamlError("");
       setYamlSaved("Saved and reconnected");
     } catch (reason) {
@@ -153,6 +330,8 @@ export function SettingsPage({
   }
 
   const portalReady = eventPortalReady(eventPortalDraft);
+  const assistantReady = aiReady(aiDraft);
+  const selectedYamlSection = yamlSections.find((section) => section.id === yamlSection) ?? yamlSections[0]!;
 
   return (
     <section className="settings-page" aria-label="Settings">
@@ -160,7 +339,7 @@ export function SettingsPage({
         <div>
           <p className="eyebrow">Settings</p>
           <h2>Connectivity and Metadata Setup</h2>
-          <p>Configure broker access, Event Portal metadata, runtime discovery, and the scenario YAML needed to make the topology useful for customers.</p>
+          <p>Configure broker access, Event Portal metadata, runtime discovery, YAML sections, and optional AI-assisted mapping for customer deployments.</p>
         </div>
         <button className="top-action" onClick={onClose}>
           <ArrowLeft size={16} />
@@ -182,11 +361,9 @@ export function SettingsPage({
           <strong>{portalReady ? "Ready" : "Optional"}</strong>
         </div>
         <div>
-          <Tags size={18} />
-          <span>Metadata</span>
-          <strong>
-            {discovered.publishers.length} publishers / {discovered.subscribers.length} subscribers
-          </strong>
+          <Bot size={18} />
+          <span>AI Helper</span>
+          <strong>{assistantReady ? "LiteLLM ready" : "Optional"}</strong>
         </div>
         <div>
           <Database size={18} />
@@ -216,11 +393,11 @@ export function SettingsPage({
               </label>
               <label>
                 Event Portal API base URL
-                <input value={eventPortalDraft.baseUrl} onChange={(event) => setEventPortalDraft({ ...eventPortalDraft, baseUrl: event.target.value })} />
+                <input autoComplete="url" value={eventPortalDraft.baseUrl} onChange={(event) => setEventPortalDraft({ ...eventPortalDraft, baseUrl: event.target.value })} />
               </label>
               <label>
                 API token environment variable
-                <input value={eventPortalDraft.tokenEnv ?? ""} onChange={(event) => setEventPortalDraft({ ...eventPortalDraft, tokenEnv: event.target.value })} />
+                <input autoComplete="off" value={eventPortalDraft.tokenEnv ?? ""} onChange={(event) => setEventPortalDraft({ ...eventPortalDraft, tokenEnv: event.target.value })} />
               </label>
               <label>
                 Local API token
@@ -234,11 +411,11 @@ export function SettingsPage({
               </label>
               <label>
                 Application domain ID
-                <input value={eventPortalDraft.applicationDomainId ?? ""} onChange={(event) => setEventPortalDraft({ ...eventPortalDraft, applicationDomainId: event.target.value })} />
+                <input autoComplete="off" value={eventPortalDraft.applicationDomainId ?? ""} onChange={(event) => setEventPortalDraft({ ...eventPortalDraft, applicationDomainId: event.target.value })} />
               </label>
               <label>
                 Environment ID
-                <input value={eventPortalDraft.environmentId ?? ""} onChange={(event) => setEventPortalDraft({ ...eventPortalDraft, environmentId: event.target.value })} />
+                <input autoComplete="off" value={eventPortalDraft.environmentId ?? ""} onChange={(event) => setEventPortalDraft({ ...eventPortalDraft, environmentId: event.target.value })} />
               </label>
               <label>
                 Sync mode
@@ -256,6 +433,65 @@ export function SettingsPage({
               {eventPortalSaved ? <span>{eventPortalSaved}</span> : null}
             </div>
           </form>
+        </section>
+
+        <section className="settings-panel ai-helper-panel" aria-label="AI mapping helper">
+          <div className="section-title-row">
+            <div>
+              <h2>AI Mapping Helper</h2>
+              <p>Connect a LiteLLM proxy to review discovered runtime data and suggest metadata matchers, topic mappings, and YAML patches.</p>
+            </div>
+            <span className={assistantReady ? "settings-status ready" : "settings-status"}>{assistantReady ? "Ready" : "Not configured"}</span>
+          </div>
+          <form className="ai-helper-form" onSubmit={submitAiAssistant}>
+            <div className="settings-form-grid">
+              <label className="checkbox-row">
+                <input type="checkbox" checked={aiDraft.enabled} onChange={(event) => setAiDraft({ ...aiDraft, enabled: event.target.checked })} />
+                Enable LiteLLM helper
+              </label>
+              <label>
+                LiteLLM base URL
+                <input autoComplete="url" value={aiDraft.baseUrl} onChange={(event) => setAiDraft({ ...aiDraft, baseUrl: event.target.value })} />
+              </label>
+              <label>
+                Model
+                <input autoComplete="off" value={aiDraft.model} onChange={(event) => setAiDraft({ ...aiDraft, model: event.target.value })} />
+              </label>
+              <label>
+                API key environment variable
+                <input autoComplete="off" value={aiDraft.apiKeyEnv ?? ""} onChange={(event) => setAiDraft({ ...aiDraft, apiKeyEnv: event.target.value })} />
+              </label>
+              <label>
+                Local API key
+                <input type="password" autoComplete="current-password" value={aiDraft.apiKey ?? ""} onChange={(event) => setAiDraft({ ...aiDraft, apiKey: event.target.value })} placeholder="Prefer an env var for production" />
+              </label>
+              <label>
+                Temperature
+                <input type="number" min="0" max="2" step="0.1" value={aiDraft.temperature ?? 0.2} onChange={(event) => setAiDraft({ ...aiDraft, temperature: Number(event.target.value) })} />
+              </label>
+            </div>
+            <div className="settings-actions">
+              <button type="submit" disabled={!scenarioConfig || isConnecting}>
+                <Save size={15} />
+                Save AI Helper
+              </button>
+              <button type="button" onClick={() => void runAiHelper()} disabled={isStaticMode || !assistantReady || aiLoading}>
+                <Sparkles size={15} />
+                {aiLoading ? "Reviewing..." : "Suggest Mapping"}
+              </button>
+              {aiSaved ? <span>{aiSaved}</span> : null}
+            </div>
+          </form>
+          {isStaticMode ? <div className="helper-note">AI suggestions require the API runtime and a reachable LiteLLM proxy.</div> : null}
+          {aiError ? <div className="form-error">{aiError}</div> : null}
+          {aiSuggestion ? (
+            <div className="ai-output">
+              <strong>
+                {aiSuggestion.model} / {new Date(aiSuggestion.generatedAt).toLocaleString()}
+              </strong>
+              <pre>{aiSuggestion.content}</pre>
+            </div>
+          ) : null}
         </section>
 
         <section className="settings-panel discovery-panel" aria-label="Discovered runtime inventory">
@@ -290,7 +526,7 @@ export function SettingsPage({
           <div className="section-title-row">
             <div>
               <h2>Metadata Mapping</h2>
-              <p>Application names, provenance, ownership, topic intent, and chargeback data come from Event Portal, YAML, or customer systems.</p>
+              <p>Application names, provenance, ownership, topic intent, and chargeback data come from Event Portal, YAML, customer systems, or the AI helper draft suggestions.</p>
             </div>
             <Search size={20} />
           </div>
@@ -345,8 +581,8 @@ export function SettingsPage({
               <span>Application identity, publisher topics, subscriber queues/topics, provenance, owner, and cost center.</span>
             </div>
             <div>
-              <strong>4. Governance source</strong>
-              <span>Optional Event Portal connection for application/event/topic intent, with YAML as override.</span>
+              <strong>4. Governance and AI</strong>
+              <span>Optional Event Portal and LiteLLM connections for metadata import and mapping suggestions.</span>
             </div>
           </div>
         </section>
@@ -355,39 +591,44 @@ export function SettingsPage({
           <div className="section-title-row">
             <div>
               <h2>YAML Config</h2>
-              <p>Edit the complete active scenario when bulk changes are faster than the visual forms.</p>
+              <p>Edit focused YAML sections and save only that part of the active scenario, or switch to the full scenario for bulk edits.</p>
             </div>
             <FileCode2 size={20} />
           </div>
+          <div className="yaml-section-tabs" role="tablist" aria-label="YAML sections">
+            {yamlSections.map((section) => (
+              <button key={section.id} className={yamlSection === section.id ? "active" : ""} onClick={() => setYamlSection(section.id)} type="button">
+                <ListTree size={14} />
+                {section.label}
+              </button>
+            ))}
+          </div>
           <div className="yaml-editor-grid">
-            <textarea value={yamlDraft} onChange={(event) => setYamlDraft(event.target.value)} spellCheck={false} />
+            <textarea value={sectionDraft} onChange={(event) => setSectionDraft(event.target.value)} spellCheck={false} />
             <aside className="yaml-assist" aria-label="YAML editing guide">
-              <h3>Editing Guide</h3>
+              <h3>{selectedYamlSection.label}</h3>
+              <p>{selectedYamlSection.description}</p>
               <dl>
                 <div>
-                  <dt>Broker</dt>
-                  <dd>Set `managementUrl`, `messageVpns`, auth, TLS, site, region, and physical location.</dd>
+                  <dt>Save behavior</dt>
+                  <dd>{yamlSection === "full" ? "Validates and replaces the active scenario from the full YAML." : "Merges this section into the active scenario and reconnects."}</dd>
                 </div>
                 <div>
-                  <dt>Event Portal</dt>
-                  <dd>Set `eventPortal.baseUrl`, `tokenEnv`, domain ID, environment ID, and sync mode.</dd>
+                  <dt>Production secrets</dt>
+                  <dd>Prefer `usernameEnv`, `passwordEnv`, `sempApiKeyEnv`, `tokenEnv`, and `apiKeyEnv` over inline secrets.</dd>
                 </div>
                 <div>
-                  <dt>Publisher</dt>
-                  <dd>Use one broker, client or username matchers, and publish topic prefixes.</dd>
-                </div>
-                <div>
-                  <dt>Subscriber</dt>
-                  <dd>Use one broker, queue matchers, queues, and topic prefixes that match publishers.</dd>
+                  <dt>AI helper</dt>
+                  <dd>Use the LiteLLM panel to draft mapping suggestions, then apply accepted changes here.</dd>
                 </div>
               </dl>
             </aside>
           </div>
           {yamlError ? <div className="form-error">{yamlError}</div> : null}
           <div className="settings-actions">
-            <button onClick={() => void saveYaml()} disabled={isConnecting}>
+            <button onClick={() => void saveYamlSection()} disabled={isConnecting}>
               <Save size={15} />
-              Save YAML and Connect
+              {yamlSection === "full" ? "Save Full YAML and Connect" : "Save Section and Connect"}
             </button>
             {yamlSaved ? <span>{yamlSaved}</span> : null}
           </div>

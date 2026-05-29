@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
-import type { BrokersFile, CatalogFile, ScenarioSummary, TopologyConfigFile, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
+import type { BrokersFile, CatalogFile, MappingSuggestionsResponse, ScenarioSummary, TopologyConfigFile, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
+import { suggestTopologyMappings } from "../ai/liteLlmAssistant.js";
 import type { RuntimeConfig } from "../config/env.js";
 import { loadTopologyConfig, parseScenarioYaml, scenarioToFiles, stringifyScenarioYaml } from "../config/loaders.js";
 import { Neo4jRepository } from "../graph/neo4jRepository.js";
@@ -109,6 +110,10 @@ export class TopologyService {
       listener(this.snapshot);
     }
     return () => this.events.off("snapshot", listener);
+  }
+
+  async suggestMappings(): Promise<MappingSuggestionsResponse> {
+    return suggestTopologyMappings(this.getActiveScenario().aiAssistant, this.getActiveScenario(), this.getSnapshot());
   }
 
   async pollOnce(): Promise<TopologySnapshot> {

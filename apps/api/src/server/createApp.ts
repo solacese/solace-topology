@@ -90,6 +90,14 @@ export function createApp(topologyService: TopologyService) {
     res.json(topologyService.getSnapshot().summary);
   });
 
+  app.post("/api/ai/mapping-suggestions", async (_req, res, next) => {
+    try {
+      res.json(await topologyService.suggestMappings());
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     res.status(400).json({ error: (error as Error).message });
   });

@@ -101,10 +101,35 @@ export interface EventPortalConfig {
   syncMode?: "read-only" | "metadata-only";
 }
 
+export interface AiAssistantConfig {
+  enabled: boolean;
+  baseUrl: string;
+  apiKeyEnv?: string;
+  apiKey?: string;
+  model: string;
+  temperature?: number;
+}
+
+export interface MappingSuggestionsResponse {
+  provider: "litellm";
+  model: string;
+  generatedAt: string;
+  content: string;
+  context: {
+    brokers: number;
+    publishers: number;
+    subscribers: number;
+    queues: number;
+    subscriptions: number;
+    topics: number;
+  };
+}
+
 export interface TopologyScenario extends BrokersFile, CatalogFile {
   id: string;
   name: string;
   eventPortal?: EventPortalConfig;
+  aiAssistant?: AiAssistantConfig;
 }
 
 export interface TopologyConfigFile {

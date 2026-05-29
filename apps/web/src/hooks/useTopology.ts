@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import YAML from "yaml";
-import type { CatalogFile, ScenarioSummary, TopologyConfigFile, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
+import type { CatalogFile, MappingSuggestionsResponse, ScenarioSummary, TopologyConfigFile, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
 import {
   apiBaseUrl,
   fetchCatalog,
+  fetchMappingSuggestions,
   fetchScenarioConfig,
   fetchScenarios,
   fetchScenarioYaml,
@@ -132,6 +133,13 @@ export function useTopology() {
     [refreshScenarioConfig, updateScenarioConfig]
   );
 
+  const suggestMappings = useCallback(async (): Promise<MappingSuggestionsResponse> => {
+    if (staticMode) {
+      throw new Error("The AI helper requires an API deployment with a LiteLLM proxy.");
+    }
+    return fetchMappingSuggestions();
+  }, []);
+
   useEffect(() => {
     if (!staticMode) {
       return;
@@ -236,11 +244,13 @@ export function useTopology() {
       error,
       paused,
       isConnecting,
+      isStaticMode: staticMode,
       setPaused,
       changeScenario,
       updateScenarioConfig,
       loadScenarioYaml,
-      updateScenarioYaml
+      updateScenarioYaml,
+      suggestMappings
     }),
     [
       activeScenarioId,
@@ -251,6 +261,7 @@ export function useTopology() {
       loadScenarioYaml,
       paused,
       scenarioConfig,
+      suggestMappings,
       scenarios,
       snapshot,
       updateScenarioConfig,

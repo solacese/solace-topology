@@ -32,6 +32,12 @@ describe("topology YAML loader", () => {
       tokenEnv: "EVENT_PORTAL_API_TOKEN",
       syncMode: "metadata-only"
     });
+    expect(automotive?.aiAssistant).toMatchObject({
+      enabled: false,
+      baseUrl: "http://localhost:4000",
+      apiKeyEnv: "LITELLM_API_KEY",
+      model: "gpt-4o-mini"
+    });
     const { brokersFile, catalog } = scenarioToFiles(automotive!);
     expect(brokersFile.brokers).toHaveLength(10);
     expect(catalog.applications.filter((app) => app.role === "emitter")).toHaveLength(15);

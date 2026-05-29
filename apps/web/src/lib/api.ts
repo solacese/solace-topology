@@ -1,4 +1,4 @@
-import type { CatalogFile, MetricsSummary, ScenarioSummary, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
+import type { CatalogFile, MappingSuggestionsResponse, MetricsSummary, ScenarioSummary, TopologyScenario, TopologySnapshot } from "@solace-topology/shared";
 
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
@@ -59,4 +59,11 @@ export function saveScenarioYaml(yaml: string): Promise<TopologySnapshot> {
 
 export function fetchSummary(): Promise<MetricsSummary> {
   return apiFetch<MetricsSummary>("/api/metrics/summary");
+}
+
+export function fetchMappingSuggestions(): Promise<MappingSuggestionsResponse> {
+  return apiFetch<MappingSuggestionsResponse>("/api/ai/mapping-suggestions", {
+    method: "POST",
+    body: "{}"
+  });
 }
