@@ -298,6 +298,286 @@ button {
   grid-column: span 1;
 }
 
+.settings-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  gap: var(--space);
+}
+
+.settings-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  background: rgba(12, 24, 37, 0.82);
+  padding: 14px;
+}
+
+.settings-hero h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.settings-hero p {
+  max-width: 78ch;
+  margin: 4px 0 0;
+  color: var(--text-muted);
+}
+
+.eyebrow {
+  margin: 0 0 4px !important;
+  color: var(--solace) !important;
+  font-size: var(--font-small);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.settings-readiness {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.settings-readiness > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px 9px;
+  min-height: 76px;
+  background: rgba(7, 16, 26, 0.76);
+  padding: 12px;
+}
+
+.settings-readiness svg {
+  grid-row: span 2;
+  color: var(--solace);
+}
+
+.settings-readiness span {
+  color: var(--text-muted);
+  font-size: var(--font-small);
+}
+
+.settings-readiness strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.94rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space);
+  align-items: start;
+}
+
+.settings-grid > .broker-settings-panel,
+.settings-grid > .metadata-panel,
+.settings-grid > .yaml-settings-panel {
+  grid-column: 1 / -1;
+}
+
+.settings-panel {
+  min-width: 0;
+  background: rgba(12, 24, 37, 0.82);
+  padding: 12px;
+  overflow: hidden;
+}
+
+.settings-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  color: #ffd6df;
+  background: rgba(255, 92, 122, 0.1);
+  font-size: var(--font-small);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.settings-status.ready {
+  color: #001f18;
+  background: var(--solace);
+}
+
+.event-portal-form {
+  margin: 0;
+}
+
+.settings-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.settings-form-grid label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.settings-form-grid input,
+.settings-form-grid select {
+  width: 100%;
+  height: 34px;
+  border: 1px solid var(--line);
+  color: #eef6fb;
+  background: rgba(5, 13, 22, 0.82);
+  padding: 0 8px;
+}
+
+.settings-form-grid .checkbox-row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  color: #eef6fb;
+  font-weight: 800;
+}
+
+.settings-form-grid .checkbox-row input {
+  width: auto;
+  height: auto;
+  accent-color: var(--solace);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+  min-height: 36px;
+}
+
+.settings-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 160px;
+  height: 36px;
+  border: 1px solid var(--solace);
+  color: #001f18;
+  background: var(--solace);
+  font-weight: 800;
+}
+
+.settings-actions button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.settings-actions span {
+  color: var(--solace);
+  font-size: var(--font-small);
+  font-weight: 800;
+}
+
+.discovery-grid,
+.recipe-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.discovery-grid > div,
+.recipe-list > div {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  background: rgba(5, 13, 22, 0.46);
+  padding: 10px;
+}
+
+.discovery-grid strong,
+.recipe-list strong {
+  font-size: 0.86rem;
+}
+
+.discovery-grid span,
+.recipe-list span {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: var(--font-small);
+  overflow-wrap: anywhere;
+}
+
+.metadata-checks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.metadata-checks span {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-size: var(--font-small);
+  font-weight: 800;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.metadata-checks .ready {
+  color: #001f18;
+  background: var(--solace);
+}
+
+.metadata-checks .warning {
+  color: #261a00;
+  background: var(--amber);
+}
+
+.settings-table {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid rgba(173, 209, 228, 0.1);
+}
+
+.settings-table > div {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.2fr) minmax(110px, 0.7fr) minmax(120px, 0.8fr) minmax(180px, 1.2fr) minmax(220px, 1.6fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 860px;
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.settings-table > div:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  color: #eef6fb;
+  background: #0a1622;
+}
+
+.settings-table span,
+.settings-table strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.settings-table small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
 .graph-shell,
 .right-panel {
   min-height: 0;
@@ -956,7 +1236,8 @@ button {
   align-items: stretch;
 }
 
-.yaml-editor-panel textarea {
+.yaml-editor-panel textarea,
+.yaml-settings-panel textarea {
   width: 100%;
   min-height: 280px;
   resize: vertical;
@@ -1062,6 +1343,8 @@ button {
 @media (max-width: 1120px) {
   .workspace,
   .workspace.has-detail,
+  .settings-grid,
+  .settings-form-grid,
   .yaml-editor-grid {
     grid-template-columns: 1fr;
   }
@@ -1077,6 +1360,11 @@ button {
   }
 
   .setup-guide {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metadata-checks,
+  .settings-readiness {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1129,5 +1417,25 @@ button {
 
   .setup-guide {
     grid-template-columns: 1fr;
+  }
+
+  .settings-hero {
+    flex-direction: column;
+  }
+
+  .settings-readiness,
+  .metadata-checks,
+  .discovery-grid,
+  .recipe-list {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-actions button {
+    width: 100%;
   }
 }

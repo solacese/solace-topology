@@ -91,9 +91,20 @@ export interface CatalogFile {
   applications: ApplicationCatalogEntry[];
 }
 
+export interface EventPortalConfig {
+  enabled: boolean;
+  baseUrl: string;
+  tokenEnv?: string;
+  token?: string;
+  applicationDomainId?: string;
+  environmentId?: string;
+  syncMode?: "read-only" | "metadata-only";
+}
+
 export interface TopologyScenario extends BrokersFile, CatalogFile {
   id: string;
   name: string;
+  eventPortal?: EventPortalConfig;
 }
 
 export interface TopologyConfigFile {

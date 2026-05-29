@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { TopologyNode, TopologyScenario } from "@solace-topology/shared";
-import { FileCode2, Network, Save, Settings, X } from "lucide-react";
-import { BrokerSettingsPanel } from "./components/BrokerSettingsPanel.js";
+import { Network, Settings } from "lucide-react";
 import { RightPanel } from "./components/RightPanel.js";
+import { SettingsPage } from "./components/SettingsPage.js";
 import { Toolbar } from "./components/Toolbar.js";
 import { TopologyGraph, type SortMode } from "./components/TopologyGraph.js";
 import { useTopology } from "./hooks/useTopology.js";
@@ -12,36 +12,12 @@ import type { GraphFilters } from "./lib/graph.js";
 export function App() {
   const topology = useTopology();
   const [selected, setSelected] = useState<TopologyNode | undefined>();
-  const [yamlOpen, setYamlOpen] = useState(false);
-  const [brokerSettingsOpen, setBrokerSettingsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("type");
-  const [yamlDraft, setYamlDraft] = useState("");
-  const [yamlError, setYamlError] = useState("");
   const [filters, setFilters] = useState<GraphFilters>({
     search: "",
     provenances: new Set()
   });
-
-  async function toggleYamlEditor() {
-    if (yamlOpen) {
-      setYamlOpen(false);
-      return;
-    }
-    setYamlError("");
-    setYamlDraft(await topology.loadScenarioYaml());
-    setYamlOpen(true);
-  }
-
-  async function saveYamlEditor() {
-    try {
-      await topology.updateScenarioYaml(yamlDraft);
-      setYamlOpen(false);
-      setYamlError("");
-      setSelected(undefined);
-    } catch (reason) {
-      setYamlError((reason as Error).message);
-    }
-  }
 
   async function saveBroker(record: BrokerRecord) {
     if (!topology.scenarioConfig) {
@@ -108,81 +84,38 @@ export function App() {
               ))}
             </select>
           </label>
-          <button className="top-action" onClick={() => setBrokerSettingsOpen((open) => !open)}>
+          <button className={settingsOpen ? "top-action active" : "top-action"} onClick={() => setSettingsOpen((open) => !open)}>
             <Settings size={16} />
-            Broker Settings
-          </button>
-          <button className={yamlOpen ? "top-action active" : "top-action"} onClick={() => void toggleYamlEditor()}>
-            <FileCode2 size={16} />
-            YAML Config
+            Settings
           </button>
         </div>
       </header>
 
       {topology.error ? <div className="app-alert">{topology.error}</div> : null}
 
-      {brokerSettingsOpen ? (
-        <BrokerSettingsPanel
+      {settingsOpen ? (
+        <SettingsPage
           snapshot={topology.snapshot}
           scenarioConfig={topology.scenarioConfig}
+          isConnecting={topology.isConnecting}
+          onClose={() => setSettingsOpen(false)}
           onSelect={setSelected}
           onSaveBroker={(record) => void saveBroker(record)}
           onRemoveBroker={(brokerId) => void removeBroker(brokerId)}
+          onSaveScenario={topology.updateScenarioConfig}
+          loadScenarioYaml={topology.loadScenarioYaml}
+          onSaveYaml={topology.updateScenarioYaml}
         />
-      ) : null}
+      ) : (
+        <>
+          <Toolbar snapshot={topology.snapshot} filters={filters} sortMode={sortMode} onFiltersChange={setFilters} onSortModeChange={setSortMode} />
 
-      {yamlOpen ? (
-        <section className="yaml-editor-panel" aria-label="Scenario YAML editor">
-          <div className="section-title-row">
-            <div>
-              <h2>Edit Active Scenario YAML Config</h2>
-              <p>Swap scenarios, broker connection fields, publishers, subscribers, subscriptions, and locations in one file.</p>
-            </div>
-            <button className="icon-button small" onClick={() => setYamlOpen(false)} aria-label="Close YAML editor">
-              <X size={16} />
-            </button>
-          </div>
-          <div className="yaml-editor-grid">
-            <textarea value={yamlDraft} onChange={(event) => setYamlDraft(event.target.value)} spellCheck={false} />
-            <aside className="yaml-assist" aria-label="YAML editing guide">
-              <h3>Editing Guide</h3>
-              <dl>
-                <div>
-                  <dt>Broker</dt>
-                  <dd>Set `managementUrl`, `messageVpns`, location, and auth mode.</dd>
-                </div>
-                <div>
-                  <dt>Publisher</dt>
-                  <dd>Use role `emitter`, one `brokerIds` value, and publish topic prefixes.</dd>
-                </div>
-                <div>
-                  <dt>Subscriber</dt>
-                  <dd>Use role `listener`, queues, and topic prefixes that match publishers.</dd>
-                </div>
-                <div>
-                  <dt>Security</dt>
-                  <dd>Use `usernameEnv`, `passwordEnv`, or `sempApiKeyEnv` for production.</dd>
-                </div>
-              </dl>
-            </aside>
-          </div>
-          {yamlError ? <div className="form-error">{yamlError}</div> : null}
-          <div className="yaml-actions">
-            <button onClick={() => void saveYamlEditor()}>
-              <Save size={15} />
-              Save and Connect
-            </button>
-            <button onClick={() => setYamlOpen(false)}>Cancel</button>
-          </div>
-        </section>
-      ) : null}
-
-      <Toolbar snapshot={topology.snapshot} filters={filters} sortMode={sortMode} onFiltersChange={setFilters} onSortModeChange={setSortMode} />
-
-      <section className="workspace has-detail">
-        <TopologyGraph snapshot={topology.snapshot} filters={filters} sortMode={sortMode} selectedId={selected?.id} onSelect={setSelected} />
-        <RightPanel snapshot={topology.snapshot} selected={selected} onSelect={setSelected} />
-      </section>
+          <section className="workspace has-detail">
+            <TopologyGraph snapshot={topology.snapshot} filters={filters} sortMode={sortMode} selectedId={selected?.id} onSelect={setSelected} />
+            <RightPanel snapshot={topology.snapshot} selected={selected} onSelect={setSelected} />
+          </section>
+        </>
+      )}
     </main>
   );
 }

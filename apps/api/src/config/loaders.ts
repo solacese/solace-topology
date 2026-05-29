@@ -49,6 +49,16 @@ const appSchema = z.object({
     .optional()
 });
 
+const eventPortalSchema = z.object({
+  enabled: z.boolean().default(false),
+  baseUrl: z.string().default("https://api.solace.cloud"),
+  tokenEnv: z.string().optional(),
+  token: z.string().optional(),
+  applicationDomainId: z.string().optional(),
+  environmentId: z.string().optional(),
+  syncMode: z.enum(["read-only", "metadata-only"]).default("metadata-only")
+});
+
 const scenarioSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -58,6 +68,7 @@ const scenarioSchema = z.object({
   }),
   brokers: z.array(brokerSchema).min(1),
   links: z.array(linkSchema).default([]),
+  eventPortal: eventPortalSchema.optional(),
   owners: z.array(z.object({ id: z.string().min(1), displayName: z.string().min(1) })),
   costCenters: z.array(z.object({ id: z.string().min(1), displayName: z.string().min(1) })),
   applications: z.array(appSchema).min(1)

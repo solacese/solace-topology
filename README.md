@@ -58,11 +58,20 @@ docker compose -f docker-compose.yml -f docker-compose.live-test.yml down
 
 ## Real Broker Setup
 
-Use **Broker Settings** in the top-right of the app for guided broker setup:
-management URL, VPN, physical location, basic credentials, or SEMP API key.
-Use **YAML Config** for bulk edits to scenarios, publishers, subscribers,
-subscriptions, links, ownership, and locations. Broker credentials can be
-supplied as environment variable references for production deployments.
+Use **Settings** in the top-right of the app for guided setup:
+
+- Broker connectivity: management URL, VPN, physical location, basic
+  credentials, or SEMP API key.
+- Event Portal metadata source: API base URL, token environment variable,
+  application domain ID, environment ID, and sync mode.
+- Metadata mapping: publishers, subscribers, provenance, owners, cost centers,
+  client matchers, queue matchers, and topic mappings.
+- Discovered runtime inventory: broker health, queues, topic patterns,
+  subscriptions, and links collected from broker polling.
+- YAML Config: bulk edits to the full active scenario.
+
+Broker and Event Portal credentials can be supplied as environment variable
+references for production deployments.
 
 The collector uses only read-only SEMP GET requests. It polls every 3 seconds
 by default and falls back to the sample topology if no broker can be reached.

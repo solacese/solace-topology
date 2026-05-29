@@ -26,6 +26,12 @@ describe("topology YAML loader", () => {
     const config = await loadTopologyConfig(path.resolve(process.cwd(), "../../config/topology.yaml"));
     const automotive = config.scenarios.find((scenario) => scenario.id === "automotive");
     expect(automotive).toBeDefined();
+    expect(automotive?.eventPortal).toMatchObject({
+      enabled: false,
+      baseUrl: "https://api.solace.cloud",
+      tokenEnv: "EVENT_PORTAL_API_TOKEN",
+      syncMode: "metadata-only"
+    });
     const { brokersFile, catalog } = scenarioToFiles(automotive!);
     expect(brokersFile.brokers).toHaveLength(10);
     expect(catalog.applications.filter((app) => app.role === "emitter")).toHaveLength(15);

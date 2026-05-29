@@ -164,6 +164,14 @@ scenarios:
         to: cloud-core
         kind: event-mesh
 
+    eventPortal:
+      enabled: false
+      baseUrl: https://api.solace.cloud
+      tokenEnv: EVENT_PORTAL_API_TOKEN
+      applicationDomainId: automotive-event-mesh
+      environmentId: production
+      syncMode: metadata-only
+
     owners:
       - id: connected-vehicle
         displayName: Connected Vehicle Platform

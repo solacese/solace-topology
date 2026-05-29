@@ -160,13 +160,13 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
                 </label>
                 <label>
                   SEMP password
-                  <input type="password" value={editing.password} onChange={(event) => setEditing({ ...editing, password: event.target.value })} />
+                  <input type="password" autoComplete="current-password" value={editing.password} onChange={(event) => setEditing({ ...editing, password: event.target.value })} />
                 </label>
               </>
             ) : (
               <label>
                 SEMP API key
-                <input type="password" value={editing.sempApiKey} onChange={(event) => setEditing({ ...editing, sempApiKey: event.target.value })} />
+                <input type="password" autoComplete="current-password" value={editing.sempApiKey} onChange={(event) => setEditing({ ...editing, sempApiKey: event.target.value })} />
               </label>
             )}
             <label>
