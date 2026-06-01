@@ -127,6 +127,8 @@ export function buildTopologySnapshot(brokersFile: BrokersFile, catalog: Catalog
         site: broker.site,
         physicalLocation: broker.physicalLocation ?? broker.site,
         environment: broker.environment,
+        amqpUrl: broker.amqpUrl,
+        messagingProtocols: broker.messagingProtocols ?? ["amqp"],
         tags: broker.tags,
         mode: observation?.mode ?? "live"
       }
@@ -238,6 +240,7 @@ export function buildTopologySnapshot(brokersFile: BrokersFile, catalog: Catalog
         provenance: app.provenance,
         owner: app.owner,
         costCenter: app.costCenter,
+        messagingProtocol: app.messagingProtocol ?? "amqp",
         brokerIds: app.brokerIds
       }
     });

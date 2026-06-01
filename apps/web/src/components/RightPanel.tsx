@@ -13,6 +13,15 @@ function displayMetadataKey(key: string): string {
   if (key === "role") {
     return "role";
   }
+  if (key === "messagingProtocol") {
+    return "protocol";
+  }
+  if (key === "messagingProtocols") {
+    return "protocols";
+  }
+  if (key === "amqpUrl") {
+    return "AMQP endpoint";
+  }
   return key;
 }
 
@@ -27,6 +36,12 @@ function displayMetadataValue(key: string, value: string | number | boolean | st
     if (value === "both") {
       return "publisher / subscriber";
     }
+  }
+  if (key === "messagingProtocol" && typeof value === "string") {
+    return value.toUpperCase();
+  }
+  if (key === "messagingProtocols" && Array.isArray(value)) {
+    return value.map((item) => item.toUpperCase()).join(", ");
   }
   return Array.isArray(value) ? value.join(", ") : String(value);
 }

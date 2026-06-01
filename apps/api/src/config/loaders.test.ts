@@ -40,8 +40,10 @@ describe("topology YAML loader", () => {
     });
     const { brokersFile, catalog } = scenarioToFiles(automotive!);
     expect(brokersFile.brokers).toHaveLength(10);
+    expect(brokersFile.brokers.every((broker) => broker.messagingProtocols?.includes("amqp"))).toBe(true);
     expect(catalog.applications.filter((app) => app.role === "emitter")).toHaveLength(15);
     expect(catalog.applications.filter((app) => app.role === "listener")).toHaveLength(5);
+    expect(catalog.applications.every((app) => app.messagingProtocol === "amqp")).toBe(true);
   });
 
   it("keeps routes to one source broker, at most one broker hop, and one subscribed broker", async () => {

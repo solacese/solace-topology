@@ -48,6 +48,8 @@ function compactScenario(scenario: TopologyScenario) {
       displayName: broker.displayName,
       site: broker.site,
       physicalLocation: broker.physicalLocation,
+      amqpUrl: broker.amqpUrl,
+      messagingProtocols: broker.messagingProtocols,
       tags: broker.tags
     })),
     links: scenario.links,
@@ -58,6 +60,7 @@ function compactScenario(scenario: TopologyScenario) {
       provenance: app.provenance,
       owner: app.owner,
       costCenter: app.costCenter,
+      messagingProtocol: app.messagingProtocol,
       brokerIds: app.brokerIds,
       clientMatchers: app.clientMatchers,
       usernameMatchers: app.usernameMatchers,

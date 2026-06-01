@@ -1,10 +1,12 @@
-import type { BrokerAuthMode, BrokerConfig, BrokerStatus, TopologyNode } from "@solace-topology/shared";
+import type { BrokerAuthMode, BrokerConfig, BrokerStatus, MessagingProtocol, TopologyNode } from "@solace-topology/shared";
 
 export interface BrokerRecord {
   id: string;
   displayName: string;
   managementUrl: string;
+  amqpUrl: string;
   messageVpn: string;
+  messagingProtocol: MessagingProtocol;
   site: string;
   region: string;
   physicalLocation: string;
@@ -35,7 +37,9 @@ export function brokerRecordFromNode(node: TopologyNode, status?: BrokerStatus):
     id: brokerIdFromNode(node),
     displayName: node.label,
     managementUrl: "",
+    amqpUrl: String(node.metadata?.amqpUrl ?? ""),
     messageVpn: "",
+    messagingProtocol: "amqp",
     site: String(node.metadata?.site ?? ""),
     region: String(node.metadata?.region ?? ""),
     physicalLocation: String(node.metadata?.physicalLocation ?? node.metadata?.site ?? ""),
@@ -53,7 +57,9 @@ export function brokerRecordFromConfig(broker: BrokerConfig, status?: BrokerStat
     id: broker.id,
     displayName: broker.displayName,
     managementUrl: broker.managementUrl,
+    amqpUrl: broker.amqpUrl ?? "",
     messageVpn: broker.messageVpns[0] ?? "",
+    messagingProtocol: broker.messagingProtocols?.[0] ?? "amqp",
     site: broker.site,
     region: broker.region,
     physicalLocation: broker.physicalLocation ?? broker.site,
@@ -73,7 +79,9 @@ export function brokerConfigFromRecord(record: BrokerRecord, previous?: BrokerCo
     id,
     displayName: record.displayName.trim(),
     managementUrl: record.managementUrl.trim(),
+    amqpUrl: record.amqpUrl.trim() || undefined,
     messageVpns: [record.messageVpn.trim()].filter(Boolean),
+    messagingProtocols: [record.messagingProtocol],
     region: record.region.trim(),
     site: record.site.trim(),
     physicalLocation: record.physicalLocation.trim(),

@@ -13,6 +13,7 @@ services:
     ports:
       - "19080:8080"
       - "11883:1883"
+      - "15672:5672"
 
   broker-2:
     <<: *solace-broker
@@ -20,6 +21,7 @@ services:
     ports:
       - "29080:8080"
       - "21883:1883"
+      - "25672:5672"
 
   broker-3:
     <<: *solace-broker
@@ -27,6 +29,7 @@ services:
     ports:
       - "39080:8080"
       - "31883:1883"
+      - "35672:5672"
 
   broker-4:
     <<: *solace-broker
@@ -34,6 +37,7 @@ services:
     ports:
       - "49080:8080"
       - "41883:1883"
+      - "45672:5672"
 
   broker-5:
     <<: *solace-broker
@@ -41,6 +45,7 @@ services:
     ports:
       - "59080:8080"
       - "51883:1883"
+      - "55672:5672"
 
   api:
     depends_on:
@@ -55,6 +60,7 @@ services:
       SAMPLE_FALLBACK_ENABLED: "false"
       SEMP_USER_LIVE: admin
       SEMP_PASSWORD_LIVE: admin
+      LIVE_AMQP_AUTH_MODE: anonymous
       LIVE_BROKER_1_URL: http://broker-1:8080
       LIVE_BROKER_2_URL: http://broker-2:8080
       LIVE_BROKER_3_URL: http://broker-3:8080
@@ -80,8 +86,8 @@ services:
       LIVE_BROKER_3_URL: http://broker-3:8080
       LIVE_BROKER_4_URL: http://broker-4:8080
       LIVE_BROKER_5_URL: http://broker-5:8080
-      LIVE_BROKER_1_MQTT_URL: mqtt://broker-1:1883
-      LIVE_BROKER_2_MQTT_URL: mqtt://broker-2:1883
-      LIVE_BROKER_3_MQTT_URL: mqtt://broker-3:1883
-      LIVE_BROKER_4_MQTT_URL: mqtt://broker-4:1883
-      LIVE_BROKER_5_MQTT_URL: mqtt://broker-5:1883
+      LIVE_BROKER_1_AMQP_URL: amqp://broker-1:5672
+      LIVE_BROKER_2_AMQP_URL: amqp://broker-2:5672
+      LIVE_BROKER_3_AMQP_URL: amqp://broker-3:5672
+      LIVE_BROKER_4_AMQP_URL: amqp://broker-4:5672
+      LIVE_BROKER_5_AMQP_URL: amqp://broker-5:5672

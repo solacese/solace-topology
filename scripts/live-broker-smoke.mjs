@@ -1,16 +1,16 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import mqtt from "mqtt";
+import rhea from "rhea";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 
 const brokers = [
-  { id: "local-broker-1", sempUrl: process.env.LIVE_BROKER_1_URL ?? "http://localhost:19080", mqttUrl: process.env.LIVE_BROKER_1_MQTT_URL ?? "mqtt://localhost:11883", topic: "live/b1/metric", subscription: "live/b1/#", queueSubscription: "live/b1/>", publisher: "pub-b1", subscriber: "sub-b1", queue: "Q.LIVE.B1" },
-  { id: "local-broker-2", sempUrl: process.env.LIVE_BROKER_2_URL ?? "http://localhost:29080", mqttUrl: process.env.LIVE_BROKER_2_MQTT_URL ?? "mqtt://localhost:21883", topic: "live/b2/metric", subscription: "live/b2/#", queueSubscription: "live/b2/>", publisher: "pub-b2", subscriber: "sub-b2", queue: "Q.LIVE.B2" },
-  { id: "local-broker-3", sempUrl: process.env.LIVE_BROKER_3_URL ?? "http://localhost:39080", mqttUrl: process.env.LIVE_BROKER_3_MQTT_URL ?? "mqtt://localhost:31883", topic: "live/b3/metric", subscription: "live/b3/#", queueSubscription: "live/b3/>", publisher: "pub-b3", subscriber: "sub-b3", queue: "Q.LIVE.B3" },
-  { id: "local-broker-4", sempUrl: process.env.LIVE_BROKER_4_URL ?? "http://localhost:49080", mqttUrl: process.env.LIVE_BROKER_4_MQTT_URL ?? "mqtt://localhost:41883", topic: "live/b4/metric", subscription: "live/b4/#", queueSubscription: "live/b4/>", publisher: "pub-b4", subscriber: "sub-b4", queue: "Q.LIVE.B4" },
-  { id: "local-broker-5", sempUrl: process.env.LIVE_BROKER_5_URL ?? "http://localhost:59080", mqttUrl: process.env.LIVE_BROKER_5_MQTT_URL ?? "mqtt://localhost:51883", topic: "live/b5/metric", subscription: "live/b5/#", queueSubscription: "live/b5/>", publisher: "pub-b5", subscriber: "sub-b5", queue: "Q.LIVE.B5" }
+  { id: "local-broker-1", sempUrl: process.env.LIVE_BROKER_1_URL ?? "http://localhost:19080", amqpUrl: process.env.LIVE_BROKER_1_AMQP_URL ?? "amqp://localhost:15672", topic: "live/b1/metric", queueSubscription: "live/b1/>", publisher: "pub-b1", subscriber: "sub-b1", queue: "Q.LIVE.B1" },
+  { id: "local-broker-2", sempUrl: process.env.LIVE_BROKER_2_URL ?? "http://localhost:29080", amqpUrl: process.env.LIVE_BROKER_2_AMQP_URL ?? "amqp://localhost:25672", topic: "live/b2/metric", queueSubscription: "live/b2/>", publisher: "pub-b2", subscriber: "sub-b2", queue: "Q.LIVE.B2" },
+  { id: "local-broker-3", sempUrl: process.env.LIVE_BROKER_3_URL ?? "http://localhost:39080", amqpUrl: process.env.LIVE_BROKER_3_AMQP_URL ?? "amqp://localhost:35672", topic: "live/b3/metric", queueSubscription: "live/b3/>", publisher: "pub-b3", subscriber: "sub-b3", queue: "Q.LIVE.B3" },
+  { id: "local-broker-4", sempUrl: process.env.LIVE_BROKER_4_URL ?? "http://localhost:49080", amqpUrl: process.env.LIVE_BROKER_4_AMQP_URL ?? "amqp://localhost:45672", topic: "live/b4/metric", queueSubscription: "live/b4/>", publisher: "pub-b4", subscriber: "sub-b4", queue: "Q.LIVE.B4" },
+  { id: "local-broker-5", sempUrl: process.env.LIVE_BROKER_5_URL ?? "http://localhost:59080", amqpUrl: process.env.LIVE_BROKER_5_AMQP_URL ?? "amqp://localhost:55672", topic: "live/b5/metric", queueSubscription: "live/b5/>", publisher: "pub-b5", subscriber: "sub-b5", queue: "Q.LIVE.B5" }
 ];
 
 const trafficOnly = process.argv.includes("--traffic-only");
@@ -18,6 +18,7 @@ const trafficOnly = process.argv.includes("--traffic-only");
 const sempUser = process.env.SEMP_USER_LIVE ?? "admin";
 const sempPassword = process.env.SEMP_PASSWORD_LIVE ?? "admin";
 const clientPassword = process.env.LIVE_CLIENT_PASSWORD ?? "secret";
+const amqpAuthMode = process.env.LIVE_AMQP_AUTH_MODE ?? "anonymous";
 
 process.env.SEMP_USER_LIVE = sempUser;
 process.env.SEMP_PASSWORD_LIVE = sempPassword;
@@ -117,59 +118,179 @@ async function ensureQueue(broker) {
   }
 }
 
+async function retryWhileSpoolStarts(broker, action) {
+  for (let attempt = 1; attempt <= 60; attempt += 1) {
+    try {
+      return await action();
+    } catch (error) {
+      if (!String(error.message).includes("message spool data not available") || attempt === 60) {
+        throw error;
+      }
+      await sleep(2_000);
+    }
+  }
+}
+
 async function configureBroker(broker) {
   await ensureClientUsername(broker, broker.publisher);
   await ensureClientUsername(broker, broker.subscriber);
-  await ensureQueue(broker);
+  await retryWhileSpoolStarts(broker, () => ensureQueue(broker));
 }
 
-async function connectMqttPair(broker) {
-  const suffix = `${process.pid}-${Date.now()}`;
-  const subscriber = mqtt.connect(broker.mqttUrl, {
-    username: broker.subscriber,
-    password: clientPassword,
-    clientId: `${broker.subscriber}-${suffix}`,
-    reconnectPeriod: 0,
-    protocolVersion: 4
-  });
-  const publisher = mqtt.connect(broker.mqttUrl, {
-    username: broker.publisher,
-    password: clientPassword,
-    clientId: `${broker.publisher}-${suffix}`,
-    reconnectPeriod: 0,
-    protocolVersion: 4
-  });
+function amqpOptions(broker, username, suffix) {
+  const url = new URL(broker.amqpUrl);
+  const protocol = url.protocol.replace(":", "");
+  const vpnName = "default";
+  return {
+    host: url.hostname,
+    port: Number(url.port || (protocol === "amqps" ? 5671 : 5672)),
+    transport: protocol === "amqps" ? "tls" : "tcp",
+    ...(amqpAuthMode === "basic" ? { username, password: clientPassword } : {}),
+    reconnect: false,
+    id: `${username}-${suffix}`,
+    container_id: `${username}-${suffix}`,
+    hostname: vpnName,
+    sasl_init_hostname: vpnName
+  };
+}
 
+function errorFromAmqpContext(context, fallback) {
+  const error = context?.error ?? context?.connection?.error ?? context;
+  if (error instanceof Error) {
+    return error;
+  }
+  if (error?.description) {
+    return new Error(error.description);
+  }
+  if (error?.condition) {
+    return new Error(String(error.condition));
+  }
+  return new Error(fallback);
+}
+
+function waitForAmqpConnection(container, broker, username, suffix) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(`AMQP connection timed out for ${broker.id} as ${username}`)), 20_000);
+    let settled = false;
+    const finish = (callback, value) => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(timeout);
+        callback(value);
+      }
+    };
+    container.once("connection_open", (context) => finish(resolve, context.connection));
+    container.once("error", (context) => finish(reject, errorFromAmqpContext(context, `AMQP error for ${broker.id} as ${username}`)));
+    container.once("connection_error", (context) => finish(reject, errorFromAmqpContext(context, `AMQP connection failed for ${broker.id} as ${username}`)));
+    container.once("protocol_error", (context) => finish(reject, errorFromAmqpContext(context, `AMQP protocol error for ${broker.id} as ${username}`)));
+    container.once("disconnected", (context) => finish(reject, errorFromAmqpContext(context, `AMQP disconnected before open for ${broker.id} as ${username}`)));
+    container.connect(amqpOptions(broker, username, suffix));
+  });
+}
+
+async function openAmqpSubscriber(broker, suffix) {
+  const container = rhea.create_container({ id: `${broker.subscriber}-${suffix}` });
+  const connection = await waitForAmqpConnection(container, broker, broker.subscriber, suffix);
   let received = 0;
-  await Promise.all([
-    new Promise((resolve, reject) => {
-      subscriber.once("error", reject);
-      subscriber.once("connect", () => {
-        subscriber.subscribe(broker.subscription, { qos: 0 }, (error) => (error ? reject(error) : resolve()));
-      });
-    }),
-    new Promise((resolve, reject) => {
-      publisher.once("error", reject);
-      publisher.once("connect", resolve);
-    })
-  ]);
+  let receiver;
 
-  subscriber.on("message", () => {
-    received += 1;
+  const ready = new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(`AMQP receiver timed out for ${broker.id}`)), 20_000);
+    let settled = false;
+    const finish = (callback, value) => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(timeout);
+        callback(value);
+      }
+    };
+    container.on("message", () => {
+      received += 1;
+    });
+    container.once("receiver_open", () => finish(resolve));
+    container.once("receiver_error", (context) => finish(reject, errorFromAmqpContext(context, `AMQP receiver failed for ${broker.id}`)));
+    receiver = connection.open_receiver({
+      name: `${broker.subscriber}-${suffix}`,
+      source: {
+        address: `queue://${broker.queue}`,
+        durable: 1,
+        expiry_policy: "never"
+      },
+      autoaccept: true
+    });
   });
-  const timer = setInterval(() => {
-    publisher.publish(broker.topic, Buffer.from(`smoke-${broker.id}-${Date.now()}`));
-  }, 25);
+  await ready;
 
   return {
-    broker,
     get received() {
       return received;
     },
     close() {
+      receiver?.close();
+      connection.close();
+    }
+  };
+}
+
+async function openAmqpPublisher(broker, suffix) {
+  const container = rhea.create_container({ id: `${broker.publisher}-${suffix}` });
+  const connection = await waitForAmqpConnection(container, broker, broker.publisher, suffix);
+  let sender;
+  let timer;
+
+  const ready = new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(`AMQP sender timed out for ${broker.id}`)), 20_000);
+    let settled = false;
+    const finish = (callback, value) => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(timeout);
+        callback(value);
+      }
+    };
+    container.once("sendable", () => {
+      timer = setInterval(() => {
+        if (sender?.sendable()) {
+          sender.send({
+            to: `topic://${broker.topic}`,
+            durable: true,
+            message_id: `smoke-${broker.id}-${Date.now()}`,
+            body: Buffer.from(`smoke-${broker.id}-${Date.now()}`)
+          });
+        }
+      }, 25);
+      finish(resolve);
+    });
+    container.once("sender_error", (context) => finish(reject, errorFromAmqpContext(context, `AMQP sender failed for ${broker.id}`)));
+    sender = connection.open_sender({
+      name: `${broker.publisher}-${suffix}`,
+      target: { address: `topic://${broker.topic}` }
+    });
+  });
+  await ready;
+
+  return {
+    close() {
       clearInterval(timer);
-      publisher.end(true);
-      subscriber.end(true);
+      sender?.close();
+      connection.close();
+    }
+  };
+}
+
+async function connectAmqpPair(broker) {
+  const suffix = `${process.pid}-${Date.now()}`;
+  const subscriber = await openAmqpSubscriber(broker, suffix);
+  const publisher = await openAmqpPublisher(broker, suffix);
+
+  return {
+    broker,
+    get received() {
+      return subscriber.received;
+    },
+    close() {
+      publisher.close();
+      subscriber.close();
     }
   };
 }
@@ -197,21 +318,21 @@ function assert(condition, message) {
   }
 }
 
-const mqttPairs = [];
+const amqpPairs = [];
 try {
   console.log("Waiting for 5 PubSub+ brokers...");
   await Promise.all(brokers.map(waitForBroker));
   console.log("Configuring client usernames, queues, and subscriptions...");
   await Promise.all(brokers.map(configureBroker));
 
-  console.log("Starting MQTT publisher/subscriber traffic...");
-  mqttPairs.push(...(await Promise.all(brokers.map(connectMqttPair))));
+  console.log("Starting AMQP publisher/subscriber traffic...");
+  amqpPairs.push(...(await Promise.all(brokers.map(connectAmqpPair))));
   await sleep(7_000);
 
   if (trafficOnly) {
     console.log("Live broker traffic is running.");
     setInterval(() => {
-      console.log(JSON.stringify({ received: mqttPairs.map((pair) => pair.received) }));
+      console.log(JSON.stringify({ received: amqpPairs.map((pair) => pair.received) }));
     }, 10_000);
     await new Promise(() => {});
   }
@@ -227,12 +348,12 @@ try {
   assert(publisherRates.every((rate) => rate > 0), `expected all publisher rates > 0, got ${publisherRates.join(", ")}`);
   assert(subscriberRates.every((rate) => rate > 0), `expected all subscriber rates > 0, got ${subscriberRates.join(", ")}`);
   assert(brokerRates.every((rate) => rate > 0), `expected all broker rates > 0, got ${brokerRates.join(", ")}`);
-  assert(mqttPairs.every((pair) => pair.received > 0), `expected all MQTT subscribers to receive messages, got ${mqttPairs.map((pair) => pair.received).join(", ")}`);
+  assert(amqpPairs.every((pair) => pair.received > 0), `expected all AMQP subscribers to receive messages, got ${amqpPairs.map((pair) => pair.received).join(", ")}`);
 
   console.log("Live broker smoke passed.");
-  console.log(JSON.stringify({ publisherRates, subscriberRates, brokerRates, received: mqttPairs.map((pair) => pair.received) }, null, 2));
+  console.log(JSON.stringify({ publisherRates, subscriberRates, brokerRates, received: amqpPairs.map((pair) => pair.received) }, null, 2));
 } finally {
-  for (const pair of mqttPairs) {
+  for (const pair of amqpPairs) {
     pair.close();
   }
 }

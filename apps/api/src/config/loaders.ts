@@ -3,6 +3,8 @@ import YAML from "yaml";
 import { z } from "zod";
 import type { BrokersFile, CatalogFile, TopologyConfigFile, TopologyScenario } from "@solace-topology/shared";
 
+const messagingProtocolSchema = z.enum(["amqp", "mqtt", "smf", "jms", "rest"]);
+
 const brokerSchema = z.object({
   id: z.string().min(1),
   displayName: z.string().min(1),
@@ -19,6 +21,8 @@ const brokerSchema = z.object({
   password: z.string().optional(),
   sempApiKeyEnv: z.string().optional(),
   sempApiKey: z.string().optional(),
+  amqpUrl: z.string().optional(),
+  messagingProtocols: z.array(messagingProtocolSchema).default(["amqp"]),
   tlsRejectUnauthorized: z.boolean().default(true),
   tags: z.array(z.string()).default([])
 });
@@ -37,6 +41,7 @@ const appSchema = z.object({
   owner: z.string().min(1),
   costCenter: z.string().min(1),
   brokerIds: z.array(z.string().min(1)).default([]),
+  messagingProtocol: messagingProtocolSchema.default("amqp"),
   clientMatchers: z.array(z.string()).optional(),
   usernameMatchers: z.array(z.string()).optional(),
   queueMatchers: z.array(z.string()).optional(),

@@ -16,7 +16,9 @@ function blankBroker(index: number): BrokerRecord {
     id: `broker-${index}`,
     displayName: `Broker ${index}`,
     managementUrl: "https://broker.example.com:943",
+    amqpUrl: "amqps://broker.example.com:5671",
     messageVpn: "default",
+    messagingProtocol: "amqp",
     site: "New site",
     region: "Europe",
     physicalLocation: "Physical site",
@@ -59,7 +61,7 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
       <div className="section-title-row">
         <div>
           <h2>Broker Settings</h2>
-          <p>Pick a broker, edit its SEMP connection, then save to reconnect the live topology.</p>
+          <p>Pick a broker, edit its SEMP discovery connection and AMQP endpoint, then save to reconnect the live topology.</p>
         </div>
         <button
           className="icon-button small"
@@ -75,7 +77,11 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
       <div className="setup-guide" aria-label="Broker setup steps">
         <span>
           <ServerCog size={15} />
-          Broker URL
+          SEMP URL
+        </span>
+        <span>
+          <RadioTower size={15} />
+          AMQP URL
         </span>
         <span>
           <Link2 size={15} />
@@ -123,6 +129,20 @@ export function BrokerSettingsPanel({ snapshot, scenarioConfig, onSelect, onSave
             <label>
               SEMP management URL
               <input value={editing.managementUrl} onChange={(event) => setEditing({ ...editing, managementUrl: event.target.value })} />
+            </label>
+            <label>
+              Messaging protocol
+              <select value={editing.messagingProtocol} onChange={(event) => setEditing({ ...editing, messagingProtocol: event.target.value as BrokerRecord["messagingProtocol"] })}>
+                <option value="amqp">AMQP 1.0</option>
+                <option value="mqtt">MQTT</option>
+                <option value="smf">SMF</option>
+                <option value="jms">JMS</option>
+                <option value="rest">REST</option>
+              </select>
+            </label>
+            <label>
+              AMQP endpoint
+              <input value={editing.amqpUrl} onChange={(event) => setEditing({ ...editing, amqpUrl: event.target.value })} placeholder="amqps://host:5671 or amqp://host:5672" />
             </label>
             <label>
               Message VPN

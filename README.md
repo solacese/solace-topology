@@ -37,7 +37,7 @@ credentials.
 
 ## Live Local Broker Smoke
 
-To validate real SEMP and MQTT behavior locally, run five PubSub+ Standard
+To validate real SEMP and AMQP behavior locally, run five PubSub+ Standard
 brokers with publisher/subscriber traffic:
 
 ```bash
@@ -46,7 +46,7 @@ npm run test:live-brokers
 ```
 
 The live fixture config is `config/live-docker.yaml`. It creates five local
-brokers, five MQTT publisher clients, five MQTT subscriber clients, queues, and
+brokers, five AMQP publisher clients, five AMQP subscriber clients, queues, and
 subscriptions, then verifies the API collector reports `live` mode with
 non-zero publisher, broker, and subscriber rates.
 
@@ -60,8 +60,8 @@ docker compose -f docker-compose.yml -f docker-compose.live-test.yml down
 
 Use **Settings** in the top-right of the app for guided setup:
 
-- Broker connectivity: management URL, VPN, physical location, basic
-  credentials, or SEMP API key.
+- Broker connectivity: SEMP management URL for discovery, AMQP endpoint for
+  application traffic, VPN, physical location, basic credentials, or SEMP API key.
 - Event Portal metadata source: API base URL, token environment variable,
   application domain ID, environment ID, and sync mode.
 - AI mapping helper: optional LiteLLM proxy URL, model, API key environment

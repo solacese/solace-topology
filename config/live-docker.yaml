@@ -5,12 +5,14 @@ scenarios:
     name: Local Live Docker Brokers
     display:
       title: Local Live Docker Brokers
-      subtitle: Five local PubSub+ brokers with MQTT publisher and subscriber traffic
+      subtitle: Five local PubSub+ brokers with AMQP publisher and subscriber traffic
 
     brokers:
       - id: local-broker-1
         displayName: Local Broker 1
         managementUrl: ${LIVE_BROKER_1_URL:-http://localhost:19080}
+        amqpUrl: ${LIVE_BROKER_1_AMQP_URL:-amqp://localhost:15672}
+        messagingProtocols: [amqp]
         messageVpns: [default]
         region: Local
         site: Edge Site 1
@@ -24,6 +26,8 @@ scenarios:
       - id: local-broker-2
         displayName: Local Broker 2
         managementUrl: ${LIVE_BROKER_2_URL:-http://localhost:29080}
+        amqpUrl: ${LIVE_BROKER_2_AMQP_URL:-amqp://localhost:25672}
+        messagingProtocols: [amqp]
         messageVpns: [default]
         region: Local
         site: Edge Site 2
@@ -37,6 +41,8 @@ scenarios:
       - id: local-broker-3
         displayName: Local Broker 3
         managementUrl: ${LIVE_BROKER_3_URL:-http://localhost:39080}
+        amqpUrl: ${LIVE_BROKER_3_AMQP_URL:-amqp://localhost:35672}
+        messagingProtocols: [amqp]
         messageVpns: [default]
         region: Local
         site: Core Site 3
@@ -50,6 +56,8 @@ scenarios:
       - id: local-broker-4
         displayName: Local Broker 4
         managementUrl: ${LIVE_BROKER_4_URL:-http://localhost:49080}
+        amqpUrl: ${LIVE_BROKER_4_AMQP_URL:-amqp://localhost:45672}
+        messagingProtocols: [amqp]
         messageVpns: [default]
         region: Local
         site: Cloud Site 4
@@ -63,6 +71,8 @@ scenarios:
       - id: local-broker-5
         displayName: Local Broker 5
         managementUrl: ${LIVE_BROKER_5_URL:-http://localhost:59080}
+        amqpUrl: ${LIVE_BROKER_5_AMQP_URL:-amqp://localhost:55672}
+        messagingProtocols: [amqp]
         messageVpns: [default]
         region: Local
         site: Cloud Site 5
@@ -100,7 +110,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-1]
-        clientMatchers: ["pub-b1-*"]
+        clientMatchers: ["*pub-b1-*"]
         usernameMatchers: ["pub-b1"]
         publishTopicPrefixes: ["live/b1/>"]
 
@@ -111,7 +121,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-2]
-        clientMatchers: ["pub-b2-*"]
+        clientMatchers: ["*pub-b2-*"]
         usernameMatchers: ["pub-b2"]
         publishTopicPrefixes: ["live/b2/>"]
 
@@ -122,7 +132,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-3]
-        clientMatchers: ["pub-b3-*"]
+        clientMatchers: ["*pub-b3-*"]
         usernameMatchers: ["pub-b3"]
         publishTopicPrefixes: ["live/b3/>"]
 
@@ -133,7 +143,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-4]
-        clientMatchers: ["pub-b4-*"]
+        clientMatchers: ["*pub-b4-*"]
         usernameMatchers: ["pub-b4"]
         publishTopicPrefixes: ["live/b4/>"]
 
@@ -144,7 +154,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-5]
-        clientMatchers: ["pub-b5-*"]
+        clientMatchers: ["*pub-b5-*"]
         usernameMatchers: ["pub-b5"]
         publishTopicPrefixes: ["live/b5/>"]
 
@@ -155,7 +165,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-1]
-        clientMatchers: ["sub-b1-*"]
+        clientMatchers: ["*sub-b1-*"]
         usernameMatchers: ["sub-b1"]
         queueMatchers: ["Q.LIVE.B1"]
         listen:
@@ -169,7 +179,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-2]
-        clientMatchers: ["sub-b2-*"]
+        clientMatchers: ["*sub-b2-*"]
         usernameMatchers: ["sub-b2"]
         queueMatchers: ["Q.LIVE.B2"]
         listen:
@@ -183,7 +193,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-3]
-        clientMatchers: ["sub-b3-*"]
+        clientMatchers: ["*sub-b3-*"]
         usernameMatchers: ["sub-b3"]
         queueMatchers: ["Q.LIVE.B3"]
         listen:
@@ -197,7 +207,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-4]
-        clientMatchers: ["sub-b4-*"]
+        clientMatchers: ["*sub-b4-*"]
         usernameMatchers: ["sub-b4"]
         queueMatchers: ["Q.LIVE.B4"]
         listen:
@@ -211,7 +221,7 @@ scenarios:
         owner: local-test
         costCenter: local-test
         brokerIds: [local-broker-5]
-        clientMatchers: ["sub-b5-*"]
+        clientMatchers: ["*sub-b5-*"]
         usernameMatchers: ["sub-b5"]
         queueMatchers: ["Q.LIVE.B5"]
         listen:

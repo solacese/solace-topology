@@ -24,6 +24,6 @@
     "vitest": "^3.1.4"
   },
   "dependencies": {
-    "mqtt": "^5.15.1"
+    "rhea": "^3.0.5"
   }
 }

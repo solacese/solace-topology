@@ -21,6 +21,7 @@ export type ApplicationRole = "emitter" | "listener" | "both";
 export type Confidence = "declared" | "observed" | "declared+observed";
 export type TopologyMode = "live" | "sample" | "mixed";
 export type BrokerAuthMode = "basic" | "bearer";
+export type MessagingProtocol = "amqp" | "mqtt" | "smf" | "jms" | "rest";
 
 export interface BrokerConfig {
   id: string;
@@ -38,6 +39,8 @@ export interface BrokerConfig {
   password?: string;
   sempApiKeyEnv?: string;
   sempApiKey?: string;
+  amqpUrl?: string;
+  messagingProtocols?: MessagingProtocol[];
   tlsRejectUnauthorized: boolean;
   tags: string[];
 }
@@ -71,6 +74,7 @@ export interface ApplicationCatalogEntry {
   owner: string;
   costCenter: string;
   brokerIds: string[];
+  messagingProtocol?: MessagingProtocol;
   clientMatchers?: string[];
   usernameMatchers?: string[];
   queueMatchers?: string[];

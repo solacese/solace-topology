@@ -60,6 +60,10 @@ function roleName(role: string): string {
   return "Publisher / Subscriber";
 }
 
+function protocolName(protocol: string | undefined): string {
+  return (protocol ?? "amqp").toUpperCase();
+}
+
 function compactList(values: string[] | undefined): string {
   return values?.length ? values.join(", ") : "Not mapped";
 }
@@ -540,6 +544,7 @@ export function SettingsPage({
             <div role="row">
               <strong>Application</strong>
               <strong>Role</strong>
+              <strong>Protocol</strong>
               <strong>Broker</strong>
               <strong>Runtime match</strong>
               <strong>Topics / queues</strong>
@@ -551,6 +556,7 @@ export function SettingsPage({
                   <small>{app.provenance}</small>
                 </span>
                 <span>{roleName(app.role)}</span>
+                <span>{protocolName(app.messagingProtocol)}</span>
                 <span>{compactList(app.brokerIds)}</span>
                 <span>{compactList([...(app.clientMatchers ?? []), ...(app.usernameMatchers ?? []), ...(app.queueMatchers ?? [])])}</span>
                 <span>{compactList([...(app.publishTopicPrefixes ?? []), ...(app.listen?.topicPrefixes ?? []), ...(app.listen?.queues ?? [])])}</span>

@@ -587,10 +587,10 @@ button {
 
 .settings-table > div {
   display: grid;
-  grid-template-columns: minmax(170px, 1.2fr) minmax(110px, 0.7fr) minmax(120px, 0.8fr) minmax(180px, 1.2fr) minmax(220px, 1.6fr);
+  grid-template-columns: minmax(170px, 1.2fr) minmax(110px, 0.7fr) minmax(80px, 0.55fr) minmax(120px, 0.8fr) minmax(180px, 1.2fr) minmax(220px, 1.6fr);
   gap: 10px;
   align-items: start;
-  min-width: 860px;
+  min-width: 940px;
   padding: 9px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.065);
 }
@@ -910,7 +910,7 @@ button {
 
 .setup-guide {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px;
 }
 
