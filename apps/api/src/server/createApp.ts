@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import type { TopologyService } from "../collector/topologyService.js";
+import { buildSunburstTree, flattenForD3 } from "../history/sunburstBridge.js";
 
 export function createApp(topologyService: TopologyService) {
   const app = express();
@@ -88,6 +89,40 @@ export function createApp(topologyService: TopologyService) {
 
   app.get("/api/metrics/summary", (_req, res) => {
     res.json(topologyService.getSnapshot().summary);
+  });
+
+  app.get("/api/history", (req, res) => {
+    const params = {
+      scenarioId: typeof req.query.scenarioId === "string" ? req.query.scenarioId : undefined,
+      since: typeof req.query.since === "string" ? req.query.since : undefined,
+      until: typeof req.query.until === "string" ? req.query.until : undefined,
+      limit: typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : undefined,
+      resolution: (typeof req.query.resolution === "string" ? req.query.resolution : "raw") as "raw" | "1m" | "5m" | "1h",
+    };
+    res.json({ points: topologyService.queryHistory(params), ...topologyService.getHistoryStats() });
+  });
+
+  app.get("/api/history/raw", (req, res) => {
+    const params = {
+      scenarioId: typeof req.query.scenarioId === "string" ? req.query.scenarioId : undefined,
+      since: typeof req.query.since === "string" ? req.query.since : undefined,
+      until: typeof req.query.until === "string" ? req.query.until : undefined,
+      limit: typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : 100,
+    };
+    res.json({ points: topologyService.queryHistoryRaw(params), ...topologyService.getHistoryStats() });
+  });
+
+  app.get("/api/sunburst/scan", (_req, res) => {
+    const snapshot = topologyService.getSnapshot();
+    const tree = buildSunburstTree(snapshot);
+    res.json(tree);
+  });
+
+  app.get("/api/sunburst/d3", (req, res) => {
+    const metric = req.query.metric === "topics" ? "topics" : "rate";
+    const snapshot = topologyService.getSnapshot();
+    const tree = buildSunburstTree(snapshot);
+    res.json(flattenForD3(tree, metric as "rate" | "topics"));
   });
 
   app.post("/api/ai/mapping-suggestions", async (_req, res, next) => {

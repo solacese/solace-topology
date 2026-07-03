@@ -4,6 +4,7 @@ import { suggestTopologyMappings } from "../ai/liteLlmAssistant.js";
 import type { RuntimeConfig } from "../config/env.js";
 import { loadTopologyConfig, parseScenarioYaml, scenarioToFiles, stringifyScenarioYaml } from "../config/loaders.js";
 import { Neo4jRepository } from "../graph/neo4jRepository.js";
+import { SnapshotStore, type HistoryQuery, type TimeSeriesPoint, type HistoryPoint } from "../history/snapshotStore.js";
 import { buildSampleObservations } from "../sample/sampleData.js";
 import { SempClient } from "./sempClient.js";
 import { buildTopologySnapshot } from "./topologyBuilder.js";
@@ -21,6 +22,7 @@ export class TopologyService {
   private snapshot: TopologySnapshot | undefined;
   private polling = false;
   private readonly lastBrokerErrors = new Map<string, string>();
+  private readonly history = new SnapshotStore();
 
   constructor(
     private readonly config: RuntimeConfig,
@@ -112,6 +114,22 @@ export class TopologyService {
     return () => this.events.off("snapshot", listener);
   }
 
+  queryHistory(params: HistoryQuery = {}): TimeSeriesPoint[] {
+    return this.history.query(params);
+  }
+
+  queryHistoryRaw(params: HistoryQuery = {}): HistoryPoint[] {
+    return this.history.queryRaw(params);
+  }
+
+  getHistoryStats(): { size: number; oldest?: string; newest?: string } {
+    return {
+      size: this.history.size,
+      oldest: this.history.oldestTimestamp,
+      newest: this.history.newestTimestamp,
+    };
+  }
+
   async suggestMappings(): Promise<MappingSuggestionsResponse> {
     return suggestTopologyMappings(this.getActiveScenario().aiAssistant, this.getActiveScenario(), this.getSnapshot());
   }
@@ -135,6 +153,7 @@ export class TopologyService {
         scenarioName: this.activeScenario!.name
       });
       this.snapshot = snapshot;
+      this.history.record(snapshot);
       await this.graph.writeSnapshot(snapshot);
       this.events.emit("snapshot", snapshot);
       return snapshot;

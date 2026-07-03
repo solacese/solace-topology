@@ -67,3 +67,34 @@ export function fetchMappingSuggestions(): Promise<MappingSuggestionsResponse> {
     body: "{}"
   });
 }
+
+export interface TimeSeriesPoint {
+  timestamp: string;
+  totalMsgRate: number;
+  totalByteRate: number;
+  brokerCount: number;
+  emitterCount: number;
+  listenerCount: number;
+}
+
+export interface HistoryResponse {
+  points: TimeSeriesPoint[];
+  size: number;
+  oldest?: string;
+  newest?: string;
+}
+
+export function fetchHistory(params?: {
+  since?: string;
+  until?: string;
+  limit?: number;
+  resolution?: "raw" | "1m" | "5m" | "1h";
+}): Promise<HistoryResponse> {
+  const searchParams = new URLSearchParams();
+  if (params?.since) searchParams.set("since", params.since);
+  if (params?.until) searchParams.set("until", params.until);
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  if (params?.resolution) searchParams.set("resolution", params.resolution);
+  const qs = searchParams.toString();
+  return apiFetch<HistoryResponse>(`/api/history${qs ? `?${qs}` : ""}`);
+}

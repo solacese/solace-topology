@@ -695,8 +695,8 @@ button {
 
 .map-link {
   fill: none;
-  stroke-linecap: butt;
-  opacity: 0.38;
+  stroke-linecap: round;
+  opacity: 0.32;
 }
 
 .map-link.dimmed {
@@ -726,13 +726,13 @@ button {
   z-index: 2;
   display: grid;
   align-content: start;
-  gap: 10px;
+  gap: 6px;
 }
 
 .structured-map {
   display: grid;
   grid-template-columns: repeat(3, minmax(210px, 1fr));
-  gap: clamp(14px, 2vw, 28px);
+  gap: clamp(32px, 4.5vw, 72px);
 }
 
 .column-heading {
@@ -772,8 +772,9 @@ button {
   gap: 8px;
   width: 100%;
   min-height: 50px;
-  padding: 8px 10px;
-  border: 1px solid rgba(173, 209, 228, 0.16);
+  padding: 8px 10px 8px 12px;
+  border: 1px solid rgba(173, 209, 228, 0.2);
+  border-left: 3px solid var(--solace);
   border-radius: 8px;
   color: #eef6fb;
   background: #08121d;
@@ -805,25 +806,30 @@ button {
 
 .topology-node.broker {
   min-height: 58px;
+  border-left-color: var(--blue);
   background: #07313d;
 }
 
 .topology-node.broker.edge {
   border-color: rgba(0, 200, 149, 0.34);
+  border-left: 3px solid var(--solace);
   background: #082820;
 }
 
 .topology-node.broker.cloud {
   border-color: rgba(0, 165, 255, 0.38);
+  border-left: 3px solid var(--blue);
   background: #062637;
 }
 
 .topology-node.broker.core {
   border-color: rgba(255, 200, 87, 0.28);
+  border-left: 3px solid var(--amber);
   background: #202414;
 }
 
 .topology-node.listener {
+  border-left-color: var(--amber);
   background: #30240c;
 }
 
