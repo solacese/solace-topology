@@ -1,0 +1,1741 @@
+{
+  "defaultScenario": "automotive",
+  "scenarios": [
+    {
+      "id": "automotive",
+      "name": "Automotive Event Mesh",
+      "display": {
+        "title": "Automotive Event Mesh",
+        "subtitle": "Connected vehicle, plant, and enterprise event flows"
+      },
+      "brokers": [
+        {
+          "id": "plant-a-edge",
+          "displayName": "Plant A Edge Broker",
+          "managementUrl": "${BROKER_PLANT_A_URL:-http://localhost:19080}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Vehicle Plant A",
+          "physicalLocation": "Douai, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_PLANT_A",
+          "passwordEnv": "SEMP_PASSWORD_PLANT_A",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "manufacturing",
+            "edge"
+          ]
+        },
+        {
+          "id": "plant-b-edge",
+          "displayName": "Plant B Edge Broker",
+          "managementUrl": "${BROKER_PLANT_B_URL:-http://localhost:29080}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Vehicle Plant B",
+          "physicalLocation": "Valladolid, Spain",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_PLANT_B",
+          "passwordEnv": "SEMP_PASSWORD_PLANT_B",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "manufacturing",
+            "edge"
+          ]
+        },
+        {
+          "id": "plant-c-edge",
+          "displayName": "Plant C Edge Broker",
+          "managementUrl": "${BROKER_PLANT_C_URL:-http://localhost:29180}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Vehicle Plant C",
+          "physicalLocation": "Bursa, Turkey",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_PLANT_C",
+          "passwordEnv": "SEMP_PASSWORD_PLANT_C",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "manufacturing",
+            "edge"
+          ]
+        },
+        {
+          "id": "battery-plant-edge",
+          "displayName": "Battery Plant Edge Broker",
+          "managementUrl": "${BROKER_BATTERY_PLANT_URL:-http://localhost:29280}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Battery Gigafactory",
+          "physicalLocation": "Douai battery campus, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_BATTERY_PLANT",
+          "passwordEnv": "SEMP_PASSWORD_BATTERY_PLANT",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "manufacturing",
+            "edge"
+          ]
+        },
+        {
+          "id": "vehicle-iot-edge",
+          "displayName": "Vehicle IoT Edge Broker",
+          "managementUrl": "${BROKER_VEHICLE_IOT_URL:-http://localhost:29380}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Connected Vehicle Ingestion",
+          "physicalLocation": "Paris connected services, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_VEHICLE_IOT",
+          "passwordEnv": "SEMP_PASSWORD_VEHICLE_IOT",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "iot",
+            "edge"
+          ]
+        },
+        {
+          "id": "cloud-core",
+          "displayName": "Cloud Core Broker",
+          "managementUrl": "${BROKER_CLOUD_URL:-http://localhost:39080}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Cloud Hub",
+          "physicalLocation": "Paris cloud region",
+          "environment": "production",
+          "authMode": "bearer",
+          "sempApiKeyEnv": "SEMP_API_KEY_CLOUD",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "cloud",
+            "analytics"
+          ]
+        },
+        {
+          "id": "analytics-cloud",
+          "displayName": "Analytics Cloud Broker",
+          "managementUrl": "${BROKER_ANALYTICS_CLOUD_URL:-http://localhost:39180}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Analytics Cloud",
+          "physicalLocation": "Frankfurt cloud region",
+          "environment": "production",
+          "authMode": "bearer",
+          "sempApiKeyEnv": "SEMP_API_KEY_ANALYTICS_CLOUD",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "cloud",
+            "analytics"
+          ]
+        },
+        {
+          "id": "data-products-cloud",
+          "displayName": "Data Products Broker",
+          "managementUrl": "${BROKER_DATA_PRODUCTS_URL:-http://localhost:39280}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Data Products Cloud",
+          "physicalLocation": "Amsterdam cloud region",
+          "environment": "production",
+          "authMode": "bearer",
+          "sempApiKeyEnv": "SEMP_API_KEY_DATA_PRODUCTS",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "cloud",
+            "data"
+          ]
+        },
+        {
+          "id": "enterprise-hub",
+          "displayName": "Enterprise Hub Broker",
+          "managementUrl": "${BROKER_ENTERPRISE_URL:-http://localhost:49080}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Enterprise Integration Hub",
+          "physicalLocation": "Boulogne-Billancourt, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_EDGE",
+          "passwordEnv": "SEMP_PASSWORD_EDGE",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "enterprise",
+            "integration"
+          ]
+        },
+        {
+          "id": "supplier-gateway",
+          "displayName": "Supplier Gateway Broker",
+          "managementUrl": "${BROKER_SUPPLIER_GATEWAY_URL:-http://localhost:49180}",
+          "messageVpns": [
+            "automotive-prod"
+          ],
+          "region": "Europe",
+          "site": "Supplier Integration Hub",
+          "physicalLocation": "Le Mans, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_SUPPLIER_GATEWAY",
+          "passwordEnv": "SEMP_PASSWORD_SUPPLIER_GATEWAY",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "enterprise",
+            "integration",
+            "edge"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "from": "plant-a-edge",
+          "to": "cloud-core",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "plant-b-edge",
+          "to": "cloud-core",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "plant-c-edge",
+          "to": "cloud-core",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "battery-plant-edge",
+          "to": "cloud-core",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "vehicle-iot-edge",
+          "to": "cloud-core",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "data-products-cloud",
+          "to": "cloud-core",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "enterprise-hub",
+          "to": "cloud-core",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "supplier-gateway",
+          "to": "cloud-core",
+          "kind": "event-mesh"
+        }
+      ],
+      "eventPortal": {
+        "enabled": false,
+        "baseUrl": "https://api.solace.cloud",
+        "tokenEnv": "EVENT_PORTAL_API_TOKEN",
+        "applicationDomainId": "automotive-event-mesh",
+        "environmentId": "production",
+        "syncMode": "metadata-only"
+      },
+      "aiAssistant": {
+        "enabled": false,
+        "baseUrl": "http://localhost:4000",
+        "apiKeyEnv": "LITELLM_API_KEY",
+        "model": "gpt-4o-mini",
+        "temperature": 0.2
+      },
+      "owners": [
+        {
+          "id": "connected-vehicle",
+          "displayName": "Connected Vehicle Platform"
+        },
+        {
+          "id": "manufacturing-it",
+          "displayName": "Manufacturing IT"
+        },
+        {
+          "id": "enterprise-apps",
+          "displayName": "Enterprise Applications"
+        },
+        {
+          "id": "data-platform",
+          "displayName": "Data Platform"
+        }
+      ],
+      "costCenters": [
+        {
+          "id": "cv-100",
+          "displayName": "Connected Vehicle"
+        },
+        {
+          "id": "mf-200",
+          "displayName": "Manufacturing Operations"
+        },
+        {
+          "id": "ep-300",
+          "displayName": "Enterprise Platforms"
+        },
+        {
+          "id": "dp-400",
+          "displayName": "Data Products"
+        }
+      ],
+      "applications": [
+        {
+          "id": "vehicle-telemetry-gateway",
+          "displayName": "Vehicle Telemetry Gateway",
+          "role": "emitter",
+          "provenance": "IoT",
+          "owner": "connected-vehicle",
+          "costCenter": "cv-100",
+          "brokerIds": [
+            "vehicle-iot-edge"
+          ],
+          "clientMatchers": [
+            "veh-telemetry-*",
+            "mqtt-vehicle-*"
+          ],
+          "usernameMatchers": [
+            "vehicle-iot-*"
+          ],
+          "publishTopicPrefixes": [
+            "vehicle/+/telemetry",
+            "vehicle/+/diagnostics"
+          ]
+        },
+        {
+          "id": "battery-health-collector",
+          "displayName": "Battery Health Collector",
+          "role": "emitter",
+          "provenance": "IoT",
+          "owner": "connected-vehicle",
+          "costCenter": "cv-100",
+          "brokerIds": [
+            "battery-plant-edge"
+          ],
+          "clientMatchers": [
+            "battery-health-*"
+          ],
+          "usernameMatchers": [
+            "battery-iot-*"
+          ],
+          "publishTopicPrefixes": [
+            "vehicle/+/battery/health",
+            "vehicle/+/battery/charge"
+          ]
+        },
+        {
+          "id": "connected-vehicle-api",
+          "displayName": "Connected Vehicle API",
+          "role": "emitter",
+          "provenance": "IoT",
+          "owner": "connected-vehicle",
+          "costCenter": "cv-100",
+          "brokerIds": [
+            "vehicle-iot-edge"
+          ],
+          "clientMatchers": [
+            "connected-api-*"
+          ],
+          "usernameMatchers": [
+            "cv-api"
+          ],
+          "publishTopicPrefixes": [
+            "vehicle/+/command/result",
+            "vehicle/+/status"
+          ]
+        },
+        {
+          "id": "charging-station-network",
+          "displayName": "Charging Station Network",
+          "role": "emitter",
+          "provenance": "IoT",
+          "owner": "connected-vehicle",
+          "costCenter": "cv-100",
+          "brokerIds": [
+            "vehicle-iot-edge"
+          ],
+          "clientMatchers": [
+            "charge-station-*"
+          ],
+          "usernameMatchers": [
+            "charging-*"
+          ],
+          "publishTopicPrefixes": [
+            "charging/+/session",
+            "charging/+/availability"
+          ]
+        },
+        {
+          "id": "paint-shop-sensors",
+          "displayName": "Paint Shop Sensors",
+          "role": "emitter",
+          "provenance": "Manufacturing",
+          "owner": "manufacturing-it",
+          "costCenter": "mf-200",
+          "brokerIds": [
+            "plant-a-edge"
+          ],
+          "clientMatchers": [
+            "paint-shop-*"
+          ],
+          "usernameMatchers": [
+            "plant-paint-*"
+          ],
+          "publishTopicPrefixes": [
+            "plant/+/paint/temperature",
+            "plant/+/paint/humidity"
+          ]
+        },
+        {
+          "id": "body-shop-robots",
+          "displayName": "Body Shop Robots",
+          "role": "emitter",
+          "provenance": "Manufacturing",
+          "owner": "manufacturing-it",
+          "costCenter": "mf-200",
+          "brokerIds": [
+            "plant-b-edge"
+          ],
+          "clientMatchers": [
+            "body-robot-*"
+          ],
+          "usernameMatchers": [
+            "robot-*"
+          ],
+          "publishTopicPrefixes": [
+            "plant/+/body/robot/state",
+            "plant/+/body/robot/cycle"
+          ]
+        },
+        {
+          "id": "assembly-line-plc",
+          "displayName": "Assembly Line PLC",
+          "role": "emitter",
+          "provenance": "Manufacturing",
+          "owner": "manufacturing-it",
+          "costCenter": "mf-200",
+          "brokerIds": [
+            "plant-c-edge"
+          ],
+          "clientMatchers": [
+            "assembly-plc-*"
+          ],
+          "usernameMatchers": [
+            "plc-*"
+          ],
+          "publishTopicPrefixes": [
+            "plant/+/assembly/line/+/state",
+            "plant/+/assembly/line/+/throughput"
+          ]
+        },
+        {
+          "id": "quality-vision-inspection",
+          "displayName": "Quality Vision Inspection",
+          "role": "emitter",
+          "provenance": "Manufacturing",
+          "owner": "manufacturing-it",
+          "costCenter": "mf-200",
+          "brokerIds": [
+            "plant-c-edge"
+          ],
+          "clientMatchers": [
+            "quality-vision-*"
+          ],
+          "usernameMatchers": [
+            "quality-*"
+          ],
+          "publishTopicPrefixes": [
+            "plant/+/quality/inspection",
+            "plant/+/quality/defect"
+          ]
+        },
+        {
+          "id": "logistics-yard-scanner",
+          "displayName": "Logistics Yard Scanner",
+          "role": "emitter",
+          "provenance": "Manufacturing",
+          "owner": "manufacturing-it",
+          "costCenter": "mf-200",
+          "brokerIds": [
+            "plant-b-edge"
+          ],
+          "clientMatchers": [
+            "yard-scanner-*"
+          ],
+          "usernameMatchers": [
+            "yard-*"
+          ],
+          "publishTopicPrefixes": [
+            "plant/+/logistics/yard/scan",
+            "plant/+/logistics/vehicle/location"
+          ]
+        },
+        {
+          "id": "dealership-order-ingest",
+          "displayName": "Dealer Order Ingest",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "enterprise-apps",
+          "costCenter": "ep-300",
+          "brokerIds": [
+            "enterprise-hub"
+          ],
+          "clientMatchers": [
+            "dealer-order-*"
+          ],
+          "usernameMatchers": [
+            "dealer-*"
+          ],
+          "publishTopicPrefixes": [
+            "sales/order/created",
+            "sales/order/updated"
+          ]
+        },
+        {
+          "id": "production-planning",
+          "displayName": "Production Planning",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "enterprise-apps",
+          "costCenter": "ep-300",
+          "brokerIds": [
+            "enterprise-hub"
+          ],
+          "clientMatchers": [
+            "planning-*"
+          ],
+          "usernameMatchers": [
+            "planning-*"
+          ],
+          "publishTopicPrefixes": [
+            "planning/build-sequence",
+            "planning/capacity"
+          ]
+        },
+        {
+          "id": "supplier-edi-gateway",
+          "displayName": "Supplier EDI Gateway",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "enterprise-apps",
+          "costCenter": "ep-300",
+          "brokerIds": [
+            "supplier-gateway"
+          ],
+          "clientMatchers": [
+            "supplier-edi-*"
+          ],
+          "usernameMatchers": [
+            "supplier-*"
+          ],
+          "publishTopicPrefixes": [
+            "supplier/+/asn",
+            "supplier/+/shipment"
+          ]
+        },
+        {
+          "id": "warranty-claims-adapter",
+          "displayName": "Warranty Claims Adapter",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "enterprise-apps",
+          "costCenter": "ep-300",
+          "brokerIds": [
+            "enterprise-hub"
+          ],
+          "clientMatchers": [
+            "warranty-*"
+          ],
+          "usernameMatchers": [
+            "warranty-*"
+          ],
+          "publishTopicPrefixes": [
+            "warranty/claim/created",
+            "warranty/claim/updated"
+          ]
+        },
+        {
+          "id": "crm-customer-events",
+          "displayName": "CRM Customer Events",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "enterprise-apps",
+          "costCenter": "ep-300",
+          "brokerIds": [
+            "enterprise-hub"
+          ],
+          "clientMatchers": [
+            "crm-events-*"
+          ],
+          "usernameMatchers": [
+            "crm-*"
+          ],
+          "publishTopicPrefixes": [
+            "customer/profile/changed",
+            "customer/consent/changed"
+          ]
+        },
+        {
+          "id": "operational-data-publisher",
+          "displayName": "Operational Data Publisher",
+          "role": "emitter",
+          "provenance": "Data",
+          "owner": "data-platform",
+          "costCenter": "dp-400",
+          "brokerIds": [
+            "data-products-cloud"
+          ],
+          "clientMatchers": [
+            "data-product-*"
+          ],
+          "usernameMatchers": [
+            "data-product-*"
+          ],
+          "publishTopicPrefixes": [
+            "data/finance/invoice",
+            "data/customer/profile",
+            "data/vehicle/aggregate"
+          ]
+        },
+        {
+          "id": "manufacturing-analytics",
+          "displayName": "Manufacturing Analytics",
+          "role": "listener",
+          "provenance": "Data",
+          "owner": "data-platform",
+          "costCenter": "dp-400",
+          "brokerIds": [
+            "cloud-core"
+          ],
+          "clientMatchers": [
+            "mfg-analytics-*"
+          ],
+          "queueMatchers": [
+            "Q.MFG.ANALYTICS"
+          ],
+          "listen": {
+            "queues": [
+              "Q.MFG.ANALYTICS"
+            ],
+            "topicPrefixes": [
+              "plant/>"
+            ]
+          }
+        },
+        {
+          "id": "digital-twin-platform",
+          "displayName": "Digital Twin Platform",
+          "role": "listener",
+          "provenance": "Data",
+          "owner": "data-platform",
+          "costCenter": "dp-400",
+          "brokerIds": [
+            "cloud-core"
+          ],
+          "clientMatchers": [
+            "digital-twin-*"
+          ],
+          "queueMatchers": [
+            "Q.DIGITAL.TWIN"
+          ],
+          "listen": {
+            "queues": [
+              "Q.DIGITAL.TWIN"
+            ],
+            "topicPrefixes": [
+              "vehicle/>",
+              "plant/>",
+              "data/>"
+            ]
+          }
+        },
+        {
+          "id": "aftersales-data-hub",
+          "displayName": "Aftersales Data Hub",
+          "role": "listener",
+          "provenance": "Enterprise",
+          "owner": "enterprise-apps",
+          "costCenter": "ep-300",
+          "brokerIds": [
+            "cloud-core"
+          ],
+          "clientMatchers": [
+            "aftersales-*"
+          ],
+          "queueMatchers": [
+            "Q.AFTERSALES.HUB"
+          ],
+          "listen": {
+            "queues": [
+              "Q.AFTERSALES.HUB"
+            ],
+            "topicPrefixes": [
+              "vehicle/+/diagnostics",
+              "warranty/>"
+            ]
+          }
+        },
+        {
+          "id": "plant-operations-control",
+          "displayName": "Plant Operations Control",
+          "role": "listener",
+          "provenance": "Manufacturing",
+          "owner": "manufacturing-it",
+          "costCenter": "mf-200",
+          "brokerIds": [
+            "cloud-core"
+          ],
+          "clientMatchers": [
+            "plant-ops-control-*"
+          ],
+          "queueMatchers": [
+            "Q.PLANT.OPERATIONS"
+          ],
+          "listen": {
+            "queues": [
+              "Q.PLANT.OPERATIONS"
+            ],
+            "topicPrefixes": [
+              "plant/>",
+              "planning/>",
+              "supplier/>"
+            ]
+          }
+        },
+        {
+          "id": "connected-vehicle-command-listener",
+          "displayName": "Connected Vehicle Command Listener",
+          "role": "listener",
+          "provenance": "IoT",
+          "owner": "connected-vehicle",
+          "costCenter": "cv-100",
+          "brokerIds": [
+            "cloud-core"
+          ],
+          "clientMatchers": [
+            "vehicle-command-listener-*"
+          ],
+          "queueMatchers": [
+            "Q.VEHICLE.COMMANDS"
+          ],
+          "listen": {
+            "queues": [
+              "Q.VEHICLE.COMMANDS"
+            ],
+            "topicPrefixes": [
+              "vehicle/+/command/result",
+              "vehicle/+/status",
+              "charging/+/availability"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "airport",
+      "name": "Airport Operations Mesh",
+      "display": {
+        "title": "Airport Operations Mesh",
+        "subtitle": "Airside, terminal, baggage, and passenger event flows"
+      },
+      "brokers": [
+        {
+          "id": "airside-edge",
+          "displayName": "Airside Edge Broker",
+          "managementUrl": "${BROKER_AIRSIDE_URL:-http://localhost:59180}",
+          "messageVpns": [
+            "airport-ops"
+          ],
+          "region": "Europe",
+          "site": "Airside Operations",
+          "physicalLocation": "Paris CDG airside operations center",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_AIRSIDE",
+          "passwordEnv": "SEMP_PASSWORD_AIRSIDE",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "airport",
+            "edge"
+          ]
+        },
+        {
+          "id": "terminal-edge",
+          "displayName": "Terminal Edge Broker",
+          "managementUrl": "${BROKER_TERMINAL_URL:-http://localhost:59280}",
+          "messageVpns": [
+            "airport-ops"
+          ],
+          "region": "Europe",
+          "site": "Terminal Operations",
+          "physicalLocation": "Paris CDG Terminal 2E",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_TERMINAL",
+          "passwordEnv": "SEMP_PASSWORD_TERMINAL",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "airport",
+            "terminal"
+          ]
+        },
+        {
+          "id": "airport-core",
+          "displayName": "Airport Core Broker",
+          "managementUrl": "${BROKER_AIRPORT_CORE_URL:-http://localhost:59380}",
+          "messageVpns": [
+            "airport-ops"
+          ],
+          "region": "Europe",
+          "site": "Operations Cloud",
+          "physicalLocation": "Paris cloud region",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_AIRPORT_CORE",
+          "passwordEnv": "SEMP_PASSWORD_AIRPORT_CORE",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "cloud",
+            "operations"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "from": "airside-edge",
+          "to": "airport-core",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "terminal-edge",
+          "to": "airport-core",
+          "kind": "event-mesh"
+        }
+      ],
+      "owners": [
+        {
+          "id": "airside-ops",
+          "displayName": "Airside Operations"
+        },
+        {
+          "id": "passenger-ops",
+          "displayName": "Passenger Operations"
+        },
+        {
+          "id": "airport-data",
+          "displayName": "Airport Data Platform"
+        }
+      ],
+      "costCenters": [
+        {
+          "id": "ao-100",
+          "displayName": "Airside"
+        },
+        {
+          "id": "po-200",
+          "displayName": "Passenger Experience"
+        },
+        {
+          "id": "ad-300",
+          "displayName": "Airport Data"
+        }
+      ],
+      "applications": [
+        {
+          "id": "runway-sensors",
+          "displayName": "Runway Sensor Network",
+          "role": "emitter",
+          "provenance": "IoT",
+          "owner": "airside-ops",
+          "costCenter": "ao-100",
+          "brokerIds": [
+            "airside-edge"
+          ],
+          "clientMatchers": [
+            "runway-*"
+          ],
+          "usernameMatchers": [
+            "runway-*"
+          ],
+          "publishTopicPrefixes": [
+            "airside/runway/+/surface",
+            "airside/runway/+/visibility"
+          ]
+        },
+        {
+          "id": "gate-turnaround",
+          "displayName": "Gate Turnaround System",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "passenger-ops",
+          "costCenter": "po-200",
+          "brokerIds": [
+            "terminal-edge"
+          ],
+          "clientMatchers": [
+            "gate-turn-*"
+          ],
+          "usernameMatchers": [
+            "gate-*"
+          ],
+          "publishTopicPrefixes": [
+            "terminal/gate/+/turnaround",
+            "terminal/gate/+/boarding"
+          ]
+        },
+        {
+          "id": "baggage-sorter",
+          "displayName": "Baggage Sorter",
+          "role": "emitter",
+          "provenance": "Manufacturing",
+          "owner": "passenger-ops",
+          "costCenter": "po-200",
+          "brokerIds": [
+            "terminal-edge"
+          ],
+          "clientMatchers": [
+            "baggage-*"
+          ],
+          "usernameMatchers": [
+            "baggage-*"
+          ],
+          "publishTopicPrefixes": [
+            "terminal/baggage/+/scan",
+            "terminal/baggage/+/exception"
+          ]
+        },
+        {
+          "id": "airport-command-center",
+          "displayName": "Airport Command Center",
+          "role": "listener",
+          "provenance": "Data",
+          "owner": "airport-data",
+          "costCenter": "ad-300",
+          "brokerIds": [
+            "airport-core"
+          ],
+          "clientMatchers": [
+            "command-center-*"
+          ],
+          "queueMatchers": [
+            "Q.AIRPORT.COMMAND"
+          ],
+          "listen": {
+            "queues": [
+              "Q.AIRPORT.COMMAND"
+            ],
+            "topicPrefixes": [
+              "airside/>",
+              "terminal/>"
+            ]
+          }
+        },
+        {
+          "id": "passenger-notification",
+          "displayName": "Passenger Notification Hub",
+          "role": "listener",
+          "provenance": "Enterprise",
+          "owner": "passenger-ops",
+          "costCenter": "po-200",
+          "brokerIds": [
+            "airport-core"
+          ],
+          "clientMatchers": [
+            "pax-notify-*"
+          ],
+          "queueMatchers": [
+            "Q.PASSENGER.NOTIFY"
+          ],
+          "listen": {
+            "queues": [
+              "Q.PASSENGER.NOTIFY"
+            ],
+            "topicPrefixes": [
+              "terminal/gate/+/boarding",
+              "terminal/baggage/+/exception"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "retail",
+      "name": "Retail Supply Chain Mesh",
+      "display": {
+        "title": "Retail Supply Chain Mesh",
+        "subtitle": "Store, warehouse, inventory, and customer event flows"
+      },
+      "brokers": [
+        {
+          "id": "store-west",
+          "displayName": "Store West Broker",
+          "managementUrl": "${BROKER_STORE_WEST_URL:-http://localhost:69180}",
+          "messageVpns": [
+            "retail-prod"
+          ],
+          "region": "North America",
+          "site": "Western Store Cluster",
+          "physicalLocation": "Seattle, USA",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_STORE_WEST",
+          "passwordEnv": "SEMP_PASSWORD_STORE_WEST",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "store",
+            "edge"
+          ]
+        },
+        {
+          "id": "warehouse-central",
+          "displayName": "Warehouse Central Broker",
+          "managementUrl": "${BROKER_WAREHOUSE_URL:-http://localhost:69280}",
+          "messageVpns": [
+            "retail-prod"
+          ],
+          "region": "North America",
+          "site": "Central Fulfillment",
+          "physicalLocation": "Dallas, USA",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_WAREHOUSE",
+          "passwordEnv": "SEMP_PASSWORD_WAREHOUSE",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "warehouse",
+            "edge"
+          ]
+        },
+        {
+          "id": "retail-cloud",
+          "displayName": "Retail Cloud Broker",
+          "managementUrl": "${BROKER_RETAIL_CLOUD_URL:-http://localhost:69380}",
+          "messageVpns": [
+            "retail-prod"
+          ],
+          "region": "North America",
+          "site": "Cloud Hub",
+          "physicalLocation": "US East cloud region",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_RETAIL_CLOUD",
+          "passwordEnv": "SEMP_PASSWORD_RETAIL_CLOUD",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "cloud",
+            "analytics"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "from": "store-west",
+          "to": "retail-cloud",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "warehouse-central",
+          "to": "retail-cloud",
+          "kind": "event-mesh"
+        }
+      ],
+      "owners": [
+        {
+          "id": "store-tech",
+          "displayName": "Store Technology"
+        },
+        {
+          "id": "supply-chain",
+          "displayName": "Supply Chain"
+        },
+        {
+          "id": "retail-data",
+          "displayName": "Retail Data Platform"
+        }
+      ],
+      "costCenters": [
+        {
+          "id": "st-100",
+          "displayName": "Store Technology"
+        },
+        {
+          "id": "sc-200",
+          "displayName": "Supply Chain"
+        },
+        {
+          "id": "rd-300",
+          "displayName": "Retail Data"
+        }
+      ],
+      "applications": [
+        {
+          "id": "pos-events",
+          "displayName": "POS Event Stream",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "store-tech",
+          "costCenter": "st-100",
+          "brokerIds": [
+            "store-west"
+          ],
+          "clientMatchers": [
+            "pos-*"
+          ],
+          "usernameMatchers": [
+            "pos-*"
+          ],
+          "publishTopicPrefixes": [
+            "store/+/pos/sale",
+            "store/+/pos/refund"
+          ]
+        },
+        {
+          "id": "shelf-sensors",
+          "displayName": "Smart Shelf Sensors",
+          "role": "emitter",
+          "provenance": "IoT",
+          "owner": "store-tech",
+          "costCenter": "st-100",
+          "brokerIds": [
+            "store-west"
+          ],
+          "clientMatchers": [
+            "shelf-*"
+          ],
+          "usernameMatchers": [
+            "shelf-*"
+          ],
+          "publishTopicPrefixes": [
+            "store/+/shelf/stock",
+            "store/+/shelf/temperature"
+          ]
+        },
+        {
+          "id": "warehouse-robots",
+          "displayName": "Warehouse Robots",
+          "role": "emitter",
+          "provenance": "Manufacturing",
+          "owner": "supply-chain",
+          "costCenter": "sc-200",
+          "brokerIds": [
+            "warehouse-central"
+          ],
+          "clientMatchers": [
+            "warehouse-robot-*"
+          ],
+          "usernameMatchers": [
+            "warehouse-robot-*"
+          ],
+          "publishTopicPrefixes": [
+            "warehouse/+/robot/state",
+            "warehouse/+/pick/complete"
+          ]
+        },
+        {
+          "id": "inventory-optimizer",
+          "displayName": "Inventory Optimizer",
+          "role": "listener",
+          "provenance": "Data",
+          "owner": "retail-data",
+          "costCenter": "rd-300",
+          "brokerIds": [
+            "retail-cloud"
+          ],
+          "clientMatchers": [
+            "inventory-opt-*"
+          ],
+          "queueMatchers": [
+            "Q.INVENTORY.OPTIMIZER"
+          ],
+          "listen": {
+            "queues": [
+              "Q.INVENTORY.OPTIMIZER"
+            ],
+            "topicPrefixes": [
+              "store/+/shelf/stock",
+              "warehouse/+/pick/complete"
+            ]
+          }
+        },
+        {
+          "id": "customer-journey",
+          "displayName": "Customer Journey Hub",
+          "role": "listener",
+          "provenance": "Data",
+          "owner": "retail-data",
+          "costCenter": "rd-300",
+          "brokerIds": [
+            "retail-cloud"
+          ],
+          "clientMatchers": [
+            "customer-journey-*"
+          ],
+          "queueMatchers": [
+            "Q.CUSTOMER.JOURNEY"
+          ],
+          "listen": {
+            "queues": [
+              "Q.CUSTOMER.JOURNEY"
+            ],
+            "topicPrefixes": [
+              "store/+/pos/sale",
+              "store/+/pos/refund"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "banking",
+      "name": "Banking Event Mesh",
+      "display": {
+        "title": "Banking Event Mesh",
+        "subtitle": "Branch, payments, fraud, and customer event flows"
+      },
+      "brokers": [
+        {
+          "id": "branch-edge",
+          "displayName": "Branch Edge Broker",
+          "managementUrl": "${BROKER_BRANCH_EDGE_URL:-http://localhost:79180}",
+          "messageVpns": [
+            "banking-prod"
+          ],
+          "region": "Europe",
+          "site": "Branch Network",
+          "physicalLocation": "Lyon, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_BRANCH_EDGE",
+          "passwordEnv": "SEMP_PASSWORD_BRANCH_EDGE",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "branch",
+            "edge"
+          ]
+        },
+        {
+          "id": "payments-core",
+          "displayName": "Payments Core Broker",
+          "managementUrl": "${BROKER_PAYMENTS_CORE_URL:-http://localhost:79280}",
+          "messageVpns": [
+            "banking-prod"
+          ],
+          "region": "Europe",
+          "site": "Payments Hub",
+          "physicalLocation": "Paris, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_PAYMENTS_CORE",
+          "passwordEnv": "SEMP_PASSWORD_PAYMENTS_CORE",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "payments",
+            "core"
+          ]
+        },
+        {
+          "id": "risk-cloud",
+          "displayName": "Risk Cloud Broker",
+          "managementUrl": "${BROKER_RISK_CLOUD_URL:-http://localhost:79380}",
+          "messageVpns": [
+            "banking-prod"
+          ],
+          "region": "Europe",
+          "site": "Risk Analytics Cloud",
+          "physicalLocation": "Frankfurt cloud region",
+          "environment": "production",
+          "authMode": "bearer",
+          "sempApiKeyEnv": "SEMP_API_KEY_RISK_CLOUD",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "risk",
+            "analytics"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "from": "branch-edge",
+          "to": "risk-cloud",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "payments-core",
+          "to": "risk-cloud",
+          "kind": "event-mesh"
+        }
+      ],
+      "owners": [
+        {
+          "id": "branch-banking",
+          "displayName": "Branch Banking"
+        },
+        {
+          "id": "payment-platform",
+          "displayName": "Payment Platform"
+        },
+        {
+          "id": "risk-data",
+          "displayName": "Risk Data Platform"
+        }
+      ],
+      "costCenters": [
+        {
+          "id": "bb-100",
+          "displayName": "Branch Banking"
+        },
+        {
+          "id": "pp-200",
+          "displayName": "Payments"
+        },
+        {
+          "id": "rd-300",
+          "displayName": "Risk And Data"
+        }
+      ],
+      "applications": [
+        {
+          "id": "atm-telemetry",
+          "displayName": "ATM Telemetry Network",
+          "role": "emitter",
+          "provenance": "IoT",
+          "owner": "branch-banking",
+          "costCenter": "bb-100",
+          "brokerIds": [
+            "branch-edge"
+          ],
+          "clientMatchers": [
+            "atm-telemetry-*"
+          ],
+          "usernameMatchers": [
+            "atm-*"
+          ],
+          "publishTopicPrefixes": [
+            "atm/+/cash/status",
+            "atm/+/device/health"
+          ]
+        },
+        {
+          "id": "card-auth-switch",
+          "displayName": "Card Authorization Switch",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "payment-platform",
+          "costCenter": "pp-200",
+          "brokerIds": [
+            "payments-core"
+          ],
+          "clientMatchers": [
+            "card-auth-*"
+          ],
+          "usernameMatchers": [
+            "card-auth-*"
+          ],
+          "publishTopicPrefixes": [
+            "payments/card/authorization",
+            "payments/card/reversal"
+          ]
+        },
+        {
+          "id": "mobile-banking-events",
+          "displayName": "Mobile Banking Events",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "branch-banking",
+          "costCenter": "bb-100",
+          "brokerIds": [
+            "payments-core"
+          ],
+          "clientMatchers": [
+            "mobile-banking-*"
+          ],
+          "usernameMatchers": [
+            "mobile-*"
+          ],
+          "publishTopicPrefixes": [
+            "customer/mobile/login",
+            "customer/mobile/payment"
+          ]
+        },
+        {
+          "id": "fraud-feature-publisher",
+          "displayName": "Fraud Feature Publisher",
+          "role": "emitter",
+          "provenance": "Data",
+          "owner": "risk-data",
+          "costCenter": "rd-300",
+          "brokerIds": [
+            "risk-cloud"
+          ],
+          "clientMatchers": [
+            "fraud-feature-*"
+          ],
+          "usernameMatchers": [
+            "fraud-feature-*"
+          ],
+          "publishTopicPrefixes": [
+            "risk/fraud/features",
+            "risk/fraud/score"
+          ]
+        },
+        {
+          "id": "fraud-monitor",
+          "displayName": "Fraud Monitor",
+          "role": "listener",
+          "provenance": "Data",
+          "owner": "risk-data",
+          "costCenter": "rd-300",
+          "brokerIds": [
+            "risk-cloud"
+          ],
+          "clientMatchers": [
+            "fraud-monitor-*"
+          ],
+          "queueMatchers": [
+            "Q.FRAUD.MONITOR"
+          ],
+          "listen": {
+            "queues": [
+              "Q.FRAUD.MONITOR"
+            ],
+            "topicPrefixes": [
+              "payments/>",
+              "customer/mobile/>",
+              "risk/fraud/>"
+            ]
+          }
+        },
+        {
+          "id": "ledger-posting-service",
+          "displayName": "Ledger Posting Service",
+          "role": "listener",
+          "provenance": "Enterprise",
+          "owner": "payment-platform",
+          "costCenter": "pp-200",
+          "brokerIds": [
+            "payments-core"
+          ],
+          "clientMatchers": [
+            "ledger-posting-*"
+          ],
+          "queueMatchers": [
+            "Q.LEDGER.POSTING"
+          ],
+          "listen": {
+            "queues": [
+              "Q.LEDGER.POSTING"
+            ],
+            "topicPrefixes": [
+              "payments/card/authorization",
+              "customer/mobile/payment"
+            ]
+          }
+        },
+        {
+          "id": "atm-operations-console",
+          "displayName": "ATM Operations Console",
+          "role": "listener",
+          "provenance": "IoT",
+          "owner": "branch-banking",
+          "costCenter": "bb-100",
+          "brokerIds": [
+            "branch-edge"
+          ],
+          "clientMatchers": [
+            "atm-ops-*"
+          ],
+          "queueMatchers": [
+            "Q.ATM.OPERATIONS"
+          ],
+          "listen": {
+            "queues": [
+              "Q.ATM.OPERATIONS"
+            ],
+            "topicPrefixes": [
+              "atm/>"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "utilities",
+      "name": "Utilities Event Mesh",
+      "display": {
+        "title": "Utilities Event Mesh",
+        "subtitle": "Grid, meter, outage, and customer event flows"
+      },
+      "brokers": [
+        {
+          "id": "field-edge",
+          "displayName": "Field Edge Broker",
+          "managementUrl": "${BROKER_FIELD_EDGE_URL:-http://localhost:89180}",
+          "messageVpns": [
+            "utilities-prod"
+          ],
+          "region": "Europe",
+          "site": "Field Operations",
+          "physicalLocation": "Marseille, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_FIELD_EDGE",
+          "passwordEnv": "SEMP_PASSWORD_FIELD_EDGE",
+          "tlsRejectUnauthorized": false,
+          "tags": [
+            "field",
+            "edge"
+          ]
+        },
+        {
+          "id": "grid-control",
+          "displayName": "Grid Control Broker",
+          "managementUrl": "${BROKER_GRID_CONTROL_URL:-http://localhost:89280}",
+          "messageVpns": [
+            "utilities-prod"
+          ],
+          "region": "Europe",
+          "site": "Grid Control Center",
+          "physicalLocation": "Toulouse, France",
+          "environment": "production",
+          "usernameEnv": "SEMP_USER_GRID_CONTROL",
+          "passwordEnv": "SEMP_PASSWORD_GRID_CONTROL",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "grid",
+            "operations"
+          ]
+        },
+        {
+          "id": "utility-cloud",
+          "displayName": "Utility Cloud Broker",
+          "managementUrl": "${BROKER_UTILITY_CLOUD_URL:-http://localhost:89380}",
+          "messageVpns": [
+            "utilities-prod"
+          ],
+          "region": "Europe",
+          "site": "Analytics Cloud",
+          "physicalLocation": "Paris cloud region",
+          "environment": "production",
+          "authMode": "bearer",
+          "sempApiKeyEnv": "SEMP_API_KEY_UTILITY_CLOUD",
+          "tlsRejectUnauthorized": true,
+          "tags": [
+            "cloud",
+            "analytics"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "from": "field-edge",
+          "to": "utility-cloud",
+          "kind": "event-mesh"
+        },
+        {
+          "from": "grid-control",
+          "to": "utility-cloud",
+          "kind": "event-mesh"
+        }
+      ],
+      "owners": [
+        {
+          "id": "field-ops",
+          "displayName": "Field Operations"
+        },
+        {
+          "id": "grid-ops",
+          "displayName": "Grid Operations"
+        },
+        {
+          "id": "utility-data",
+          "displayName": "Utility Data Platform"
+        }
+      ],
+      "costCenters": [
+        {
+          "id": "fo-100",
+          "displayName": "Field Operations"
+        },
+        {
+          "id": "go-200",
+          "displayName": "Grid Operations"
+        },
+        {
+          "id": "ud-300",
+          "displayName": "Utility Data"
+        }
+      ],
+      "applications": [
+        {
+          "id": "smart-meter-headend",
+          "displayName": "Smart Meter Head-End",
+          "role": "emitter",
+          "provenance": "IoT",
+          "owner": "field-ops",
+          "costCenter": "fo-100",
+          "brokerIds": [
+            "field-edge"
+          ],
+          "clientMatchers": [
+            "smart-meter-*"
+          ],
+          "usernameMatchers": [
+            "meter-*"
+          ],
+          "publishTopicPrefixes": [
+            "meter/+/reading",
+            "meter/+/voltage"
+          ]
+        },
+        {
+          "id": "grid-scada-telemetry",
+          "displayName": "Grid SCADA Telemetry",
+          "role": "emitter",
+          "provenance": "Manufacturing",
+          "owner": "grid-ops",
+          "costCenter": "go-200",
+          "brokerIds": [
+            "grid-control"
+          ],
+          "clientMatchers": [
+            "scada-*"
+          ],
+          "usernameMatchers": [
+            "scada-*"
+          ],
+          "publishTopicPrefixes": [
+            "grid/+/substation/status",
+            "grid/+/feeder/load"
+          ]
+        },
+        {
+          "id": "outage-management",
+          "displayName": "Outage Management System",
+          "role": "emitter",
+          "provenance": "Enterprise",
+          "owner": "grid-ops",
+          "costCenter": "go-200",
+          "brokerIds": [
+            "grid-control"
+          ],
+          "clientMatchers": [
+            "outage-mgmt-*"
+          ],
+          "usernameMatchers": [
+            "outage-*"
+          ],
+          "publishTopicPrefixes": [
+            "outage/created",
+            "outage/restored"
+          ]
+        },
+        {
+          "id": "weather-risk-feed",
+          "displayName": "Weather Risk Feed",
+          "role": "emitter",
+          "provenance": "Data",
+          "owner": "utility-data",
+          "costCenter": "ud-300",
+          "brokerIds": [
+            "utility-cloud"
+          ],
+          "clientMatchers": [
+            "weather-risk-*"
+          ],
+          "usernameMatchers": [
+            "weather-*"
+          ],
+          "publishTopicPrefixes": [
+            "weather/risk/zone",
+            "weather/risk/storm"
+          ]
+        },
+        {
+          "id": "grid-balancing-console",
+          "displayName": "Grid Balancing Console",
+          "role": "listener",
+          "provenance": "Manufacturing",
+          "owner": "grid-ops",
+          "costCenter": "go-200",
+          "brokerIds": [
+            "utility-cloud"
+          ],
+          "clientMatchers": [
+            "grid-balancing-*"
+          ],
+          "queueMatchers": [
+            "Q.GRID.BALANCING"
+          ],
+          "listen": {
+            "queues": [
+              "Q.GRID.BALANCING"
+            ],
+            "topicPrefixes": [
+              "grid/>",
+              "weather/risk/>"
+            ]
+          }
+        },
+        {
+          "id": "customer-outage-notifier",
+          "displayName": "Customer Outage Notifier",
+          "role": "listener",
+          "provenance": "Enterprise",
+          "owner": "field-ops",
+          "costCenter": "fo-100",
+          "brokerIds": [
+            "utility-cloud"
+          ],
+          "clientMatchers": [
+            "outage-notifier-*"
+          ],
+          "queueMatchers": [
+            "Q.CUSTOMER.OUTAGE"
+          ],
+          "listen": {
+            "queues": [
+              "Q.CUSTOMER.OUTAGE"
+            ],
+            "topicPrefixes": [
+              "outage/>",
+              "meter/+/voltage"
+            ]
+          }
+        },
+        {
+          "id": "utility-analytics",
+          "displayName": "Utility Analytics",
+          "role": "listener",
+          "provenance": "Data",
+          "owner": "utility-data",
+          "costCenter": "ud-300",
+          "brokerIds": [
+            "utility-cloud"
+          ],
+          "clientMatchers": [
+            "utility-analytics-*"
+          ],
+          "queueMatchers": [
+            "Q.UTILITY.ANALYTICS"
+          ],
+          "listen": {
+            "queues": [
+              "Q.UTILITY.ANALYTICS"
+            ],
+            "topicPrefixes": [
+              "meter/>",
+              "grid/>",
+              "outage/>"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
